@@ -3,7 +3,6 @@ import * as winstonDaily from "winston-daily-rotate-file";
 import * as winston from "winston";
 import * as packageJson from "package.json";
 
-
 /**
  * @author Yi Kanghoon
  * @description Winston 기반 로그 파일 생성
