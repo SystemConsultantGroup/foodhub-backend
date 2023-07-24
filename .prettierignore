@@ -1,0 +1,10 @@
+# prettier 정렬 규칙에서 제외시키는 파일
+dist
+node_modules
+yarn.lock
+package-lock.json
+README.md
+Dockerfile
+.nvmrc
+.vscode
+.idea
