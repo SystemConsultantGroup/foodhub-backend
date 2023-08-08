@@ -23,7 +23,7 @@ model User {
   gender           Int?         @db.TinyInt
   isActivated      Boolean
   createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  updatedAt        DateTime     @default(now()) @updatedAt
   deletedAt        DateTime?
   UserGroup        UserGroup[]
   Restaurant       Restaurant[]
@@ -62,7 +62,7 @@ model Group {
   isPublic   Boolean
   password   String?
   createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  updatedAt  DateTime     @default(now()) @updatedAt
   deletedAt  DateTime?
   UserGroup  UserGroup[]
   Restaurant Restaurant[]
@@ -81,7 +81,7 @@ model UserGroup {
   authority   Int       @db.TinyInt
   isActivated Boolean
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @default(now()) @updatedAt
   deletedAt   DateTime?
 }
 
@@ -110,7 +110,7 @@ model Restaurant {
   orderTip        String?
   isActivated     Boolean
   createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  updatedAt       DateTime        @default(now()) @updatedAt
   deletedAt       DateTime?
   RestaurantTag   RestaurantTag[]
   File            File[]
@@ -131,7 +131,7 @@ model RestaurantTag {
   tagId        BigInt
   tag          Tag        @relation(fields: [tagId], references: [id])
   createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  updatedAt    DateTime   @default(now()) @updatedAt
   deletedAt    DateTime?
 }
 
@@ -147,7 +147,7 @@ model File {
   mimeType     String
   size         Int
   createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  updatedAt    DateTime    @default(now()) @updatedAt
   deletedAt    DateTime?
 }
 
@@ -160,7 +160,7 @@ model Review {
   score        Int        @db.TinyInt
   content      String?
   createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  updatedAt    DateTime   @default(now()) @updatedAt
   deletedAt    DateTime?
 }
 
@@ -173,7 +173,7 @@ model Invitation {
   limitNumber Int?
   useNumber   Int?
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @default(now()) @updatedAt
   deletedAt   DateTime?
 }
 
@@ -187,7 +187,7 @@ model Vote {
   isAppendable   Boolean
   isDraft        Boolean
   createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  updatedAt      DateTime  @default(now()) @updatedAt
   deletedAt      DateTime?
   Item           Item[]
 }
@@ -201,7 +201,7 @@ model Item {
   restaurantName String?
   score            Int
   createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  updatedAt        DateTime    @default(now()) @updatedAt
   deletedAt        DateTime?
   ItemUser         ItemUser[]
 }
