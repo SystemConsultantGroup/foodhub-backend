@@ -13,22 +13,23 @@ datasource db {
 
 // user 테이블 정의
 model User {
-  id               BigInt       @id @default(autoincrement())
+  id               BigInt          @id @default(autoincrement())
   email            String
   password         String
   nickname         String
-  default_photo_id Int          @db.TinyInt
+  default_photo_id Int             @db.TinyInt
   user_photo_uuid  String?
   birth_year       DateTime?
-  gender           Int?         @db.TinyInt
+  gender           Int?            @db.TinyInt
   isActivated      Boolean
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @default(now()) @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now()) @updatedAt
   deletedAt        DateTime?
-  UserGroups       UserGroup[]
+  Registrations    Registration[]
   Restaurants      Restaurant[]
   Files            File[]
   Reviews          Review[]
+  VoteItemUserAs   VoteItemUserA[]
 }
 
 model SidoArea {
@@ -54,24 +55,24 @@ model EmdArea {
 }
 
 model Group {
-  id          BigInt       @id @default(autoincrement())
-  name        String
-  type        Int          @db.TinyInt
-  areaId      BigInt
-  area        EmdArea      @relation(fields: [areaId], references: [id])
-  isPublic    Boolean
-  password    String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @default(now()) @updatedAt
-  deletedAt   DateTime?
-  UserGroups  UserGroup[]
-  Restaurants Restaurant[]
-  Files       File[]
-  Invitations Invitation[]
-  Votes       Vote[]
+  id            BigInt         @id @default(autoincrement())
+  name          String
+  type          Int            @db.TinyInt
+  areaId        BigInt
+  area          EmdArea        @relation(fields: [areaId], references: [id])
+  isPublic      Boolean
+  password      String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+  deletedAt     DateTime?
+  Registrations Registration[]
+  Restaurants   Restaurant[]
+  Files         File[]
+  Invitations   Invitation[]
+  Votes         Vote[]
 }
 
-model UserGroup {
+model Registration {
   id          BigInt    @id @default(autoincrement())
   userId      BigInt
   user        User      @relation(fields: [userId], references: [id])
@@ -193,21 +194,26 @@ model Vote {
 }
 
 model VoteItem {
-  id             BigInt         @id @default(autoincrement())
-  voteId         BigInt
-  vote           Vote           @relation(fields: [voteId], references: [id])
-  restaurantId   String?
-  restaurant     Restaurant?    @relation(fields: [restaurantId], references: [id])
-  restaurantName String?
-  score          Int
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @default(now()) @updatedAt
-  deletedAt      DateTime?
-  VoteItemUsers  VoteItemUser[]
+  id               BigInt          @id @default(autoincrement())
+  voteId           BigInt
+  vote             Vote            @relation(fields: [voteId], references: [id])
+  restaurantId     String?
+  restaurant       Restaurant?     @relation(fields: [restaurantId], references: [id])
+  rerestaurantName String?
+  scroe            Int
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now()) @updatedAt
+  deletedAt        DateTime?
+  VoteItemUserAs   VoteItemUserA[]
 }
 
-model VoteItemUser {
-  id       BigInt   @id @default(autoincrement())
-  itemId   BigInt
-  voteItem VoteItem @relation(fields: [itemId], references: [id])
+model VoteItemUserA {
+  id        BigInt    @id @default(autoincrement())
+  itemId    BigInt
+  voteItem  VoteItem  @relation(fields: [itemId], references: [id])
+  userId    BigInt
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime?
 }
