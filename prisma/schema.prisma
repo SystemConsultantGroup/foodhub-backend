@@ -198,7 +198,7 @@ model Item {
   vote             Vote        @relation(fields: [voteId], references: [id])
   restaurantId     String?
   restaurant       Restaurant? @relation(fields: [restaurantId], references: [id])
-  rerestaurantName String?
+  restaurantName String?
   scroe            Int
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
