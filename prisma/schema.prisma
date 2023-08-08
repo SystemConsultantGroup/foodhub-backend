@@ -115,7 +115,7 @@ model Restaurant {
   RestaurantTags  RestaurantTag[]
   Files           File[]
   Reviews         Review[]
-  Items           Item[]
+  VoteItems       VoteItem[]
 }
 
 model Tag {
@@ -178,36 +178,36 @@ model Invitation {
 }
 
 model Vote {
-  id             BigInt    @id @default(autoincrement())
+  id             BigInt     @id @default(autoincrement())
   name           String
   groupId        BigInt
-  group          Group     @relation(fields: [groupId], references: [id])
+  group          Group      @relation(fields: [groupId], references: [id])
   isDuplicatable Boolean
   isSecret       Boolean
   isAppendable   Boolean
   isDraft        Boolean
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @default(now()) @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @default(now()) @updatedAt
   deletedAt      DateTime?
-  Items          Item[]
+  VoteItems      VoteItem[]
 }
 
-model Item {
-  id               BigInt      @id @default(autoincrement())
-  voteId           BigInt
-  vote             Vote        @relation(fields: [voteId], references: [id])
-  restaurantId     String?
-  restaurant       Restaurant? @relation(fields: [restaurantId], references: [id])
+model VoteItem {
+  id             BigInt         @id @default(autoincrement())
+  voteId         BigInt
+  vote           Vote           @relation(fields: [voteId], references: [id])
+  restaurantId   String?
+  restaurant     Restaurant?    @relation(fields: [restaurantId], references: [id])
   restaurantName String?
-  score            Int
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @default(now()) @updatedAt
-  deletedAt        DateTime?
-  ItemUsers        ItemUser[]
+  score          Int
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now()) @updatedAt
+  deletedAt      DateTime?
+  VoteItemUsers  VoteItemUser[]
 }
 
-model ItemUser {
-  id     BigInt @id @default(autoincrement())
-  itemId BigInt
-  item   Item   @relation(fields: [itemId], references: [id])
+model VoteItemUser {
+  id       BigInt   @id @default(autoincrement())
+  itemId   BigInt
+  voteItem VoteItem @relation(fields: [itemId], references: [id])
 }
