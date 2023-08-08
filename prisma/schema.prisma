@@ -199,7 +199,7 @@ model Item {
   restaurantId     String?
   restaurant       Restaurant? @relation(fields: [restaurantId], references: [id])
   restaurantName String?
-  scroe            Int
+  score            Int
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   deletedAt        DateTime?
