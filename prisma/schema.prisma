@@ -2,11 +2,212 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["windows", "darwin"]
 }
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+// user 테이블 정의
+model User {
+  id               Int          @id @default(autoincrement())
+  email            String
+  password         String
+  nickname         String
+  default_photo_id Int          @db.TinyInt
+  user_photo_uuid  String?
+  birth_year       DateTime?
+  gender           Int?         @db.TinyInt
+  isActivated      Boolean
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  deletedAt        DateTime?
+  UserGroup        UserGroup[]
+  Restaurant       Restaurant[]
+  File             File[]
+  Review           Review[]
+}
+
+model SidoAreas {
+  id        Int         @id @default(autoincrement())
+  name      String
+  SiggAreas SiggAreas[]
+}
+
+model SiggAreas {
+  id       Int        @id @default(autoincrement())
+  name     String
+  sidoId   Int
+  sido     SidoAreas  @relation(fields: [sidoId], references: [id])
+  EmdAreas EmdAreas[]
+}
+
+model EmdAreas {
+  id     Int       @id @default(autoincrement())
+  name   String
+  siggId Int
+  sigg   SiggAreas @relation(fields: [siggId], references: [id])
+  Group  Group[]
+}
+
+model Group {
+  id         Int          @id @default(autoincrement())
+  name       String
+  type       Int          @db.TinyInt
+  areaId     Int
+  area       EmdAreas     @relation(fields: [areaId], references: [id])
+  isPublic   Boolean
+  password   String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  deletedAt  DateTime?
+  UserGroup  UserGroup[]
+  Restaurant Restaurant[]
+  File       File[]
+  Invitation Invitation[]
+  Vote       Vote[]
+}
+
+model UserGroup {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  groupId     Int
+  group       Group     @relation(fields: [groupId], references: [id])
+  nickname    String
+  authority   Int       @db.TinyInt
+  isActivated Boolean
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+}
+
+model Category {
+  id         Int          @id @default(autoincrement())
+  name       String
+  Restaurant Restaurant[]
+}
+
+model Restaurant {
+  id              String          @id @default(uuid())
+  userId          Int
+  user            User            @relation(fields: [userId], references: [id])
+  groupId         Int
+  group           Group           @relation(fields: [groupId], references: [id])
+  name            String
+  categoryId      Int
+  category        Category        @relation(fields: [categoryId], references: [id])
+  address         String?
+  link            String?
+  delivery        Boolean?
+  comment         String?
+  capacity        Int?            @db.TinyInt
+  openingHour     String?
+  recommendedMenu String?
+  orderTip        String?
+  isActivated     Boolean
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+  RestaurantTag   RestaurantTag[]
+  File            File[]
+  Review          Review[]
+  Item            Item[]
+}
+
+model Tag {
+  id            Int             @id @default(autoincrement())
+  name          String
+  RestaurantTag RestaurantTag[]
+}
+
+model RestaurantTag {
+  id           Int        @id @default(autoincrement())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  tagId        Int
+  tag          Tag        @relation(fields: [tagId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+}
+
+model File {
+  uuid         String      @id @default(uuid())
+  restaurantId String?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
+  userId       Int?
+  user         User?       @relation(fields: [userId], references: [id])
+  groupId      Int?
+  group        Group?      @relation(fields: [groupId], references: [id])
+  name         String
+  mimeType     String
+  size         Int
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+}
+
+model Review {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  user         User       @relation(fields: [userId], references: [id])
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  score        Int        @db.TinyInt
+  content      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+}
+
+model Invitation {
+  id          Int       @id @default(autoincrement())
+  groupId     Int
+  group       Group     @relation(fields: [groupId], references: [id])
+  link        String
+  exprieAt    DateTime?
+  limitNumber Int?
+  useNumber   Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+}
+
+model Vote {
+  id             Int       @id @default(autoincrement())
+  name           String
+  groupId        Int
+  group          Group     @relation(fields: [groupId], references: [id])
+  isDuplicatable Boolean
+  isSecret       Boolean
+  isAppendable   Boolean
+  isDraft        Boolean
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  Item           Item[]
+}
+
+model Item {
+  id               Int         @id @default(autoincrement())
+  voteId           Int
+  vote             Vote        @relation(fields: [voteId], references: [id])
+  restaurantId     String?
+  restaurant       Restaurant? @relation(fields: [restaurantId], references: [id])
+  rerestaurantName String?
+  scroe            Int
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+  ItemUser         ItemUser[]
+}
+
+model ItemUser {
+  id     Int  @id @default(autoincrement())
+  itemId Int
+  item   Item @relation(fields: [itemId], references: [id])
 }
