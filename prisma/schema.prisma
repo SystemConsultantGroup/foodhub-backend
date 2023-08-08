@@ -17,7 +17,7 @@ model User {
   email            String
   password         String
   nickname         String
-  default_photo_id Int             @db.TinyInt
+  default_photo_id Int             @default(dbgenerated("FLOOR(RAND()*7 + 1)")) @db.TinyInt // 1~6
   user_photo_uuid  String?
   birth_year       DateTime?
   gender           Int?            @db.TinyInt
