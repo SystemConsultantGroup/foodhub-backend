@@ -25,50 +25,50 @@ model User {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @default(now()) @updatedAt
   deletedAt        DateTime?
-  UserGroup        UserGroup[]
-  Restaurant       Restaurant[]
-  File             File[]
-  Review           Review[]
+  UserGroups       UserGroup[]
+  Restaurants      Restaurant[]
+  Files            File[]
+  Reviews          Review[]
 }
 
-model SidoAreas {
-  id        BigInt      @id @default(autoincrement())
+model SidoArea {
+  id        BigInt     @id @default(autoincrement())
   name      String
-  SiggAreas SiggAreas[]
+  SiggAreas SiggArea[]
 }
 
-model SiggAreas {
-  id       BigInt     @id @default(autoincrement())
+model SiggArea {
+  id       BigInt    @id @default(autoincrement())
   name     String
   sidoId   BigInt
-  sido     SidoAreas  @relation(fields: [sidoId], references: [id])
-  EmdAreas EmdAreas[]
+  sido     SidoArea  @relation(fields: [sidoId], references: [id])
+  EmdAreas EmdArea[]
 }
 
-model EmdAreas {
-  id     BigInt    @id @default(autoincrement())
+model EmdArea {
+  id     BigInt   @id @default(autoincrement())
   name   String
   siggId BigInt
-  sigg   SiggAreas @relation(fields: [siggId], references: [id])
-  Group  Group[]
+  sigg   SiggArea @relation(fields: [siggId], references: [id])
+  Groups Group[]
 }
 
 model Group {
-  id         BigInt       @id @default(autoincrement())
-  name       String
-  type       Int          @db.TinyInt
-  areaId     BigInt
-  area       EmdAreas     @relation(fields: [areaId], references: [id])
-  isPublic   Boolean
-  password   String?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @default(now()) @updatedAt
-  deletedAt  DateTime?
-  UserGroup  UserGroup[]
-  Restaurant Restaurant[]
-  File       File[]
-  Invitation Invitation[]
-  Vote       Vote[]
+  id          BigInt       @id @default(autoincrement())
+  name        String
+  type        Int          @db.TinyInt
+  areaId      BigInt
+  area        EmdArea      @relation(fields: [areaId], references: [id])
+  isPublic    Boolean
+  password    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+  deletedAt   DateTime?
+  UserGroups  UserGroup[]
+  Restaurants Restaurant[]
+  Files       File[]
+  Invitations Invitation[]
+  Votes       Vote[]
 }
 
 model UserGroup {
@@ -86,9 +86,9 @@ model UserGroup {
 }
 
 model Category {
-  id         BigInt       @id @default(autoincrement())
-  name       String
-  Restaurant Restaurant[]
+  id          BigInt       @id @default(autoincrement())
+  name        String
+  Restaurants Restaurant[]
 }
 
 model Restaurant {
@@ -112,16 +112,16 @@ model Restaurant {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @default(now()) @updatedAt
   deletedAt       DateTime?
-  RestaurantTag   RestaurantTag[]
-  File            File[]
-  Review          Review[]
-  Item            Item[]
+  RestaurantTags  RestaurantTag[]
+  Files           File[]
+  Reviews         Review[]
+  Items           Item[]
 }
 
 model Tag {
-  id            BigInt          @id @default(autoincrement())
-  name          String
-  RestaurantTag RestaurantTag[]
+  id             BigInt          @id @default(autoincrement())
+  name           String
+  RestaurantTags RestaurantTag[]
 }
 
 model RestaurantTag {
@@ -189,7 +189,7 @@ model Vote {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @default(now()) @updatedAt
   deletedAt      DateTime?
-  Item           Item[]
+  Items          Item[]
 }
 
 model Item {
@@ -203,7 +203,7 @@ model Item {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @default(now()) @updatedAt
   deletedAt        DateTime?
-  ItemUser         ItemUser[]
+  ItemUsers        ItemUser[]
 }
 
 model ItemUser {
