@@ -169,7 +169,7 @@ model Invitation {
   groupId     Int
   group       Group     @relation(fields: [groupId], references: [id])
   link        String
-  exprieAt    DateTime?
+  expireAt    DateTime?
   limitNumber Int?
   useNumber   Int?
   createdAt   DateTime  @default(now())
