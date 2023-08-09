@@ -93,39 +93,39 @@ model Category {
 }
 
 model Restaurant {
-  id              String          @id @default(uuid())
+  id              String           @id @default(uuid())
   userId          BigInt
-  user            User            @relation(fields: [userId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
   groupId         BigInt
-  group           Group           @relation(fields: [groupId], references: [id])
+  group           Group            @relation(fields: [groupId], references: [id])
   name            String
   categoryId      BigInt
-  category        Category        @relation(fields: [categoryId], references: [id])
+  category        Category         @relation(fields: [categoryId], references: [id])
   address         String?
   link            String?
   delivery        Boolean?
   comment         String?
-  capacity        Int?            @db.TinyInt
+  capacity        Int?             @db.TinyInt
   openingHour     String?
   recommendedMenu String?
   orderTip        String?
   isActivated     Boolean
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @default(now()) @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
   deletedAt       DateTime?
-  RestaurantTags  RestaurantTag[]
+  RestaurantTagAs RestaurantTagA[]
   Files           File[]
   Reviews         Review[]
   VoteItems       VoteItem[]
 }
 
 model Tag {
-  id             BigInt          @id @default(autoincrement())
-  name           String
-  RestaurantTags RestaurantTag[]
+  id              BigInt           @id @default(autoincrement())
+  name            String
+  RestaurantTagAs RestaurantTagA[]
 }
 
-model RestaurantTag {
+model RestaurantTagA {
   id           BigInt     @id @default(autoincrement())
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
