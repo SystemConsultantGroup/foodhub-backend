@@ -15,7 +15,7 @@ datasource db {
 model User {
   id             BigInt          @id @default(autoincrement())
   email          String
-  password       String
+  password       String?
   nickname       String
   defaultPhotoId Int             @default(dbgenerated("FLOOR(RAND()*7 + 1)")) @db.TinyInt // 1~6
   userPhotoUuid  String?
