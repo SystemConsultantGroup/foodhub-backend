@@ -194,17 +194,17 @@ model Vote {
 }
 
 model VoteItem {
-  id               BigInt          @id @default(autoincrement())
-  voteId           BigInt
-  vote             Vote            @relation(fields: [voteId], references: [id])
-  restaurantId     String?
-  restaurant       Restaurant?     @relation(fields: [restaurantId], references: [id])
-  rerestaurantName String?
-  scroe            Int
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @default(now()) @updatedAt
-  deletedAt        DateTime?
-  VoteItemUserAs   VoteItemUserA[]
+  id             BigInt          @id @default(autoincrement())
+  voteId         BigInt
+  vote           Vote            @relation(fields: [voteId], references: [id])
+  restaurantId   String?
+  restaurant     Restaurant?     @relation(fields: [restaurantId], references: [id])
+  restaurantName String?
+  score          Int
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+  deletedAt      DateTime?
+  VoteItemUserAs VoteItemUserA[]
 }
 
 model VoteItemUserA {
