@@ -14,7 +14,7 @@ datasource db {
 // user 테이블 정의
 model User {
   id             BigInt          @id @default(autoincrement())
-  email          String
+  email          String          @unique
   password       String?
   nickname       String
   defaultPhotoId Int             @default(dbgenerated("FLOOR(RAND()*7 + 1)")) @db.TinyInt // 1~6
