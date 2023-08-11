@@ -2,11 +2,217 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["windows", "darwin"]
 }
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id             BigInt          @id @default(autoincrement())
+  email          String          @unique
+  password       String?
+  nickname       String
+  defaultPhotoId Int             @default(dbgenerated("FLOOR(RAND()*7 + 1)")) @db.TinyInt // 1~6
+  userPhotoUuid  String?
+  birthYear      DateTime?
+  gender         Int?            @db.TinyInt
+  isActivated    Boolean
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+  deletedAt      DateTime?
+  Registrations  Registration[]
+  Restaurants    Restaurant[]
+  Files          File[]
+  Reviews        Review[]
+  VoteItemUserAs VoteItemUserA[]
+}
+
+model SidoArea {
+  id        BigInt     @id @default(autoincrement())
+  name      String
+  SiggAreas SiggArea[]
+}
+
+model SiggArea {
+  id       BigInt    @id @default(autoincrement())
+  name     String
+  EmdAreas EmdArea[]
+  sidoId   BigInt
+  sido     SidoArea  @relation(fields: [sidoId], references: [id])
+}
+
+model EmdArea {
+  id     BigInt   @id @default(autoincrement())
+  name   String
+  Groups Group[]
+  siggId BigInt
+  sigg   SiggArea @relation(fields: [siggId], references: [id])
+}
+
+model Group {
+  id            BigInt         @id @default(autoincrement())
+  name          String
+  type          Int            @db.TinyInt
+  isPublic      Boolean
+  password      String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+  deletedAt     DateTime?
+  Registrations Registration[]
+  Restaurants   Restaurant[]
+  Files         File[]
+  Invitations   Invitation[]
+  Votes         Vote[]
+  areaId        BigInt
+  area          EmdArea        @relation(fields: [areaId], references: [id])
+}
+
+model Registration {
+  id          BigInt    @id @default(autoincrement())
+  nickname    String
+  authority   Int       @db.TinyInt
+  isActivated Boolean
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  deletedAt   DateTime?
+  userId      BigInt
+  groupId     BigInt
+  user        User      @relation(fields: [userId], references: [id])
+  group       Group     @relation(fields: [groupId], references: [id])
+}
+
+model Category {
+  id          BigInt       @id @default(autoincrement())
+  name        String
+  Restaurants Restaurant[]
+}
+
+model Restaurant {
+  id              String           @id @default(uuid())
+  name            String
+  address         String?
+  link            String?
+  delivery        Boolean?
+  comment         String?
+  capacity        Int?             @db.TinyInt
+  openingHour     String?
+  recommendedMenu String?
+  orderTip        String?
+  isActivated     Boolean
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  deletedAt       DateTime?
+  RestaurantTagAs RestaurantTagA[]
+  Files           File[]
+  Reviews         Review[]
+  VoteItems       VoteItem[]
+  userId          BigInt
+  groupId         BigInt
+  categoryId      BigInt
+  user            User             @relation(fields: [userId], references: [id])
+  group           Group            @relation(fields: [groupId], references: [id])
+  category        Category         @relation(fields: [categoryId], references: [id])
+}
+
+model Tag {
+  id              BigInt           @id @default(autoincrement())
+  name            String
+  RestaurantTagAs RestaurantTagA[]
+}
+
+model RestaurantTagA {
+  id           BigInt     @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now()) @updatedAt
+  deletedAt    DateTime?
+  restaurantId String
+  tagId        BigInt
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  tag          Tag        @relation(fields: [tagId], references: [id])
+}
+
+model File {
+  uuid         String      @id @default(uuid())
+  name         String
+  mimeType     String
+  size         Int
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @default(now()) @updatedAt
+  deletedAt    DateTime?
+  restaurantId String?
+  userId       BigInt?
+  groupId      BigInt?
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id])
+  user         User?       @relation(fields: [userId], references: [id])
+  group        Group?      @relation(fields: [groupId], references: [id])
+}
+
+model Review {
+  id           BigInt     @id @default(autoincrement())
+  score        Int        @db.TinyInt
+  content      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now()) @updatedAt
+  deletedAt    DateTime?
+  userId       BigInt
+  restaurantId String
+  user         User       @relation(fields: [userId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+}
+
+model Invitation {
+  id          BigInt    @id @default(autoincrement())
+  link        String
+  expireAt    DateTime?
+  limitNumber Int?
+  useNumber   Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  deletedAt   DateTime?
+  groupId     BigInt
+  group       Group     @relation(fields: [groupId], references: [id])
+}
+
+model Vote {
+  id             BigInt     @id @default(autoincrement())
+  name           String
+  isDuplicatable Boolean
+  isSecret       Boolean
+  isAppendable   Boolean
+  isDraft        Boolean
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @default(now()) @updatedAt
+  deletedAt      DateTime?
+  VoteItems      VoteItem[]
+  groupId        BigInt
+  group          Group      @relation(fields: [groupId], references: [id])
+}
+
+model VoteItem {
+  id             BigInt          @id @default(autoincrement())
+  restaurantName String?
+  score          Int
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+  deletedAt      DateTime?
+  VoteItemUserAs VoteItemUserA[]
+  voteId         BigInt
+  restaurantId   String?
+  vote           Vote            @relation(fields: [voteId], references: [id])
+  restaurant     Restaurant?     @relation(fields: [restaurantId], references: [id])
+}
+
+model VoteItemUserA {
+  id        BigInt    @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime?
+  itemId    BigInt
+  userId    BigInt
+  voteItem  VoteItem  @relation(fields: [itemId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
 }
