@@ -11,7 +11,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// user 테이블 정의
 model User {
   id             BigInt          @id @default(autoincrement())
   email          String          @unique
