@@ -73,7 +73,7 @@ model Group {
 
 model Registration {
   id          BigInt    @id @default(autoincrement())
-  nickname    String
+  nickname    String?
   authority   Int       @db.TinyInt
   isActivated Boolean
   createdAt   DateTime  @default(now())
