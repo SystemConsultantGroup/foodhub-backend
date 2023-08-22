@@ -16,7 +16,7 @@ model User {
   email          String          @unique
   password       String?
   nickname       String
-  defaultPhotoId Int             @default(dbgenerated("FLOOR(RAND()*7 + 1)")) @db.TinyInt // 1~6
+  defaultPhotoId Int             @db.TinyInt // 1~6
   userPhotoUuid  String?
   birthYear      DateTime?
   gender         Int?            @db.TinyInt
@@ -73,7 +73,7 @@ model Group {
 
 model Registration {
   id          BigInt    @id @default(autoincrement())
-  nickname    String
+  nickname    String?
   authority   Int       @db.TinyInt
   isActivated Boolean
   createdAt   DateTime  @default(now())
