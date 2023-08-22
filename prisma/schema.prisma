@@ -3,7 +3,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["windows", "darwin"]
+  binaryTargets = ["windows", "darwin", "debian-openssl-1.1.x"]
 }
 
 datasource db {
@@ -15,8 +15,10 @@ model User {
   id             BigInt          @id @default(autoincrement())
   email          String          @unique
   password       String?
+  provider       Provider        @default(LOCAL)
+  oauthId        BigInt?         @unique
   nickname       String
-  defaultPhotoId Int             @default(dbgenerated("FLOOR(RAND()*7 + 1)")) @db.TinyInt // 1~6
+  defaultPhotoId Int             @db.TinyInt // 1~6
   userPhotoUuid  String?
   birthYear      DateTime?
   gender         Int?            @db.TinyInt
@@ -215,4 +217,9 @@ model VoteItemUserA {
   userId    BigInt
   voteItem  VoteItem  @relation(fields: [itemId], references: [id])
   user      User      @relation(fields: [userId], references: [id])
+}
+
+enum Provider {
+  KAKAO
+  LOCAL
 }
