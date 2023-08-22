@@ -45,8 +45,8 @@ export class UsersController {
 
   @Patch("me")
   async updateMe() {
-    const res = await this.usersService.updateMe();
-    return res;
+    const updatedMyInfo = await this.usersService.updateMe();
+    return new UserResponseDto(updatedMyInfo);
   }
 
   @Delete("me")

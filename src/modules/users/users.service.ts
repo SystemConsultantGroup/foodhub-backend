@@ -48,7 +48,21 @@ export class UsersService {
   }
 
   async updateMe() {
-    return "updateMe";
+    const res: Partial<User> & { file?: Partial<File> } = {
+      id: BigInt(1),
+      email: "sample@email.com",
+      password: "password123",
+      nickname: "nickname123",
+      defaultPhotoId: 1,
+      birthYear: new Date("1990-01-01"),
+      gender: 1,
+      isActivated: true,
+      file: {},
+      createdAt: new Date("2023-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2023-01-10T10:00:00.000Z"),
+      deletedAt: null,
+    };
+    return res;
   }
 
   async deleteMe() {
