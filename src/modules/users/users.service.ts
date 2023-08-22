@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { CreateUserDto } from "src/modules/users/dtos/create-user.dto";
+import { User } from "@prisma/client";
 
 @Injectable()
 export class UsersService {
@@ -11,24 +12,39 @@ export class UsersService {
   }
 
   async createUser(createUserDto: CreateUserDto) {
-    return {
+    const res: Partial<User> & { file?: Partial<File> } = {
       id: BigInt(1),
       email: "sample@email.com",
       password: "password123",
       nickname: createUserDto.nickname,
       defaultPhotoId: 1,
-      userPhotoUuid: "123e4567-e89b-12d3-a456-426614174000",
       birthYear: new Date("1990-01-01"),
       gender: 1,
       isActivated: true,
+      file: {},
       createdAt: new Date("2023-01-01T10:00:00.000Z"),
       updatedAt: new Date("2023-01-10T10:00:00.000Z"),
       deletedAt: null,
     };
+    return res;
   }
 
   async getMe() {
-    return "getMe";
+    const res: Partial<User> & { file?: Partial<File> } = {
+      id: BigInt(1),
+      email: "sample@email.com",
+      password: "password123",
+      nickname: "nickname123",
+      defaultPhotoId: 1,
+      birthYear: new Date("1990-01-01"),
+      gender: 1,
+      isActivated: true,
+      file: {},
+      createdAt: new Date("2023-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2023-01-10T10:00:00.000Z"),
+      deletedAt: null,
+    };
+    return res;
   }
 
   async updateMe() {
