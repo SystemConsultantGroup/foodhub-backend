@@ -1,4 +1,4 @@
 export enum UserProvider {
-    KAKAO = 'KAKAO',
-    LOCAL = 'LOCAL',
+  KAKAO = "KAKAO",
+  LOCAL = "LOCAL",
 }

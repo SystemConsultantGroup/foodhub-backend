@@ -1,34 +1,42 @@
-import { Controller, Get, HttpStatus, Query, Req, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, Req, Res, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { AuthGuard } from "@nestjs/passport";
-import { ApiOperation } from "@nestjs/swagger";
-import { JwtGuard } from "./guards/jwt.guard";
+import { Request, Response } from "express";
+import { ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ConfigService } from "@nestjs/config";
+import { Oauth2Guard } from "./guards/oauth2.guard";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService
+  ) {}
 
-  @Get("kakao")
-  @UseGuards(AuthGuard("kakao"))
-  @ApiOperation({ summary: "카카오 로그인 테스트 API" })
-  async kakaoAuthenticate(@Req() req: Request) {
-    return "test";
+  @Get("kakao/login")
+  @ApiOperation({ summary: "카카오 로그인 접근 API / Redirect " })
+  @ApiResponse({ status: 302, description: "Redirect to Kakao Oauth2 Login " })
+  kakaoAuthenticate(@Res() res: Response) {
+    const clientID = this.configService.get("kakao.clientID");
+    const callbackURI = this.configService.get("kakao.callbackURI");
+    const redirectURI = `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${clientID}&redirect_uri=${callbackURI}`;
+    res.set("Location", redirectURI);
+    res.status(302).send();
   }
 
-  @Get("kakao/callback") // Kakao Access Token return
+  @Get("kakao/callback") // Kakao Access Token return in Response cookie
   @ApiOperation({ summary: "카카오 로그인 callback" })
-  async kakaoLogin(@Query('code') query: string, @Res() res) {
-    const idToken = await this.authService.getKakaoIdToken(query);
-    const kakaoID = await this.authService.getKakaoUserInfo(idToken);
-    const accessToken = await this.authService.kakaoLogin(kakaoID);
-    res.header('Authorization', `Bearer ${accessToken}`);
-    res.status(HttpStatus.OK).send();
+  async kakaoLogin(@Query("code") query: string, @Res() res: Response) {
+    const token = await this.authService.getKakaoIdToken(query);
+    res.cookie("token", token, {
+      httpOnly: true,
+    });
+    res.send();
   }
 
-  @Get("jwt")
-  @UseGuards(JwtGuard) // JWT 로그인 테스트
+  @Get("test")
+  @UseGuards(Oauth2Guard) // JWT 로그인 테스트
   @ApiOperation({ summary: "카카오 로그인 테스트 API" })
   async temp(@Req() req: Request) {
-    return "test";
+    return req.body.oauth2Id;
   }
 }

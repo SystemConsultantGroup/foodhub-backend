@@ -10,6 +10,7 @@ export default () => ({
   kakao: {
     clientID: process.env.KAKAO_CLIENT_ID,
     callbackURI: process.env.KAKAO_CALLBACK_URI,
+    clientSecret: process.env.KAKAO_CLIENT_SECRET,
   },
   database: {
     host: process.env.DB_HOST,
