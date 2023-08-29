@@ -7,6 +7,15 @@ export default () => ({
     root: process.env.PWD,
     domain: process.env.APP_DOMAIN,
   },
+  fe: {
+    baseUrl: process.env.FE_BASE_URL,
+  },
+  kakao: {
+    clientID: process.env.KAKAO_CLIENT_ID,
+    callbackURI: process.env.KAKAO_CALLBACK_URI,
+    logoutRedirectURI: process.env.KAKAO_LOGOUT_REDIRECT_URI,
+    clientSecret: process.env.KAKAO_CLIENT_SECRET,
+  },
   database: {
     host: process.env.DB_HOST,
     port: parseInt(process.env.DB_PORT),
