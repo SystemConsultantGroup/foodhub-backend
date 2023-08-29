@@ -16,7 +16,7 @@ model User {
   email          String          @unique
   password       String?
   provider       Provider        @default(LOCAL)
-  oauthId        BigInt?         @unique
+  oauthId        String?         @unique
   nickname       String
   defaultPhotoId Int             @db.TinyInt // 1~6
   userPhotoUuid  String?
