@@ -1,9 +1,8 @@
-import { Controller, Get, Query, Req, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, Res } from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
-import { Oauth2Guard } from "./guards/oauth2.guard";
 
 @Controller("auth")
 export class AuthController {

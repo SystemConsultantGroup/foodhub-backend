@@ -35,13 +35,16 @@ export class AuthService {
 
   async isUserExist(token: string) {
     const decodedToken = jwt.decode(token);
-    const sub = decodedToken.sub as string;
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        oauthId: sub,
-      },
-    });
-
-    return user;
+    const sub = decodedToken.sub;
+    if (typeof sub === "string") {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          oauthId: sub,
+        },
+      });
+      return user;
+    } else {
+      throw new BadRequestException("Invalid Token");
+    }
   }
 }
