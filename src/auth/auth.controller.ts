@@ -54,11 +54,4 @@ export class AuthController {
     res.clearCookie("token", { httpOnly: true });
     res.status(302).send();
   }
-
-  @Get("test")
-  @UseGuards(Oauth2Guard) // Oauth2Guard 테스트
-  @ApiOperation({ summary: "Oauth2Guard 테스트 API" })
-  async testKakaoOauth(@Req() req: Request) {
-    return req.body.oauth2Id;
-  }
 }
