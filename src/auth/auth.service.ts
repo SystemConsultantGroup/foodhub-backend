@@ -1,4 +1,4 @@
-import { PrismaService } from './../config/database/prisma.service';
+import { PrismaService } from "./../config/database/prisma.service";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios from "axios";
@@ -6,8 +6,10 @@ import * as jwt from "jsonwebtoken";
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly configService: ConfigService,
-              private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prismaService: PrismaService
+  ) {}
 
   async getKakaoIdToken(code: string) {
     const kakaoGetTokenUrl = "https://kauth.kakao.com/oauth/token";
@@ -37,7 +39,7 @@ export class AuthService {
     const user = await this.prismaService.user.findUnique({
       where: {
         oauthId: sub,
-      }
+      },
     });
 
     return user;

@@ -13,7 +13,7 @@ export class AuthController {
   ) {}
 
   @Get("kakao/login")
-  @ApiOperation({ summary: "카카오 로그인 접근 API / Redirect " })
+  @ApiOperation({ summary: "카카오 로그인 접근 API " })
   @ApiResponse({ status: 302, description: "Redirect to Kakao Oauth2 Login " })
   kakaoAuthenticate(@Res() res: Response) {
     const clientID = this.configService.get("kakao.clientID");
@@ -36,11 +36,29 @@ export class AuthController {
     res.status(302).send();
   }
 
+  @Get("kakao/logout")
+  @ApiOperation({ summary: "카카오 로그아웃 접근 API " })
+  async kakaoLogout(@Res() res: Response) {
+    const clientID = this.configService.get("kakao.clientID");
+    const callbackURI = this.configService.get("kakao.logoutRedirectURI");
+    const redirectURI = `https://kauth.kakao.com/oauth/logout?client_id=${clientID}&logout_redirect_uri=${callbackURI}`;
+    res.set("Location", redirectURI);
+    res.status(302).send();
+  }
+
+  @Get("kakao/logout/redirect")
+  @ApiOperation({ summary: "카카오 로그아웃 Redirect" })
+  async kakaoLogoutredirect(@Query("state") state: string, @Res() res: Response) {
+    const FE_BASEURL = this.configService.get("fe.baseUrl");
+    res.set("Location", FE_BASEURL);
+    res.clearCookie("token", { httpOnly: true });
+    res.status(302).send();
+  }
 
   @Get("test")
-  @UseGuards(Oauth2Guard) // JWT 로그인 테스트
-  @ApiOperation({ summary: "카카오 로그인 테스트 API" })
-  async temp(@Req() req: Request) {
+  @UseGuards(Oauth2Guard) // Oauth2Guard 테스트
+  @ApiOperation({ summary: "Oauth2Guard 테스트 API" })
+  async testKakaoOauth(@Req() req: Request) {
     return req.body.oauth2Id;
   }
 }
