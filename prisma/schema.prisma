@@ -3,7 +3,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["windows", "darwin"]
+  binaryTargets = ["windows", "darwin", "debian-openssl-1.1.x"]
 }
 
 datasource db {
@@ -17,6 +17,8 @@ model User {
   oauth2Id       String?         @unique
   provider       Provider        @default(LOCAL)
   password       String?
+  provider       Provider        @default(LOCAL)
+  oauthId        String?         @unique
   nickname       String
   defaultPhotoId Int             @db.TinyInt // 1~6
   userPhotoUuid  String?
@@ -220,6 +222,6 @@ model VoteItemUserA {
 }
 
 enum Provider {
-  LOCAL
   KAKAO
+  LOCAL
 }
