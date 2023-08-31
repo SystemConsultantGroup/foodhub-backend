@@ -15,7 +15,7 @@ model User {
   id             BigInt          @id @default(autoincrement())
   email          String          @unique
   password       String?
-  provider       Provider        @default(LOCAL)
+  provider       Provider        @default(KAKAO)
   oauthId        String?         @unique
   nickname       String
   defaultPhotoId Int             @db.TinyInt // 1~6
@@ -221,5 +221,4 @@ model VoteItemUserA {
 
 enum Provider {
   KAKAO
-  LOCAL
 }
