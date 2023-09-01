@@ -1,4 +1,4 @@
-import { PrismaService } from "./../config/database/prisma.service";
+import { PrismaService } from "./../../config/database/prisma.service";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios from "axios";
