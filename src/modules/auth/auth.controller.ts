@@ -1,8 +1,10 @@
-import { Controller, Get, Query, Res } from "@nestjs/common";
+import { Controller, Get, Query, Res, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { Response } from "express";
 import { ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
+import { Oauth2Guard } from "./guards/oauth2.guard";
+import { CurrentUser } from "src/common/decorators/current-user.decorator";
 
 @Controller("auth")
 export class AuthController {
@@ -53,4 +55,12 @@ export class AuthController {
     res.clearCookie("token", { httpOnly: true });
     res.status(302).send();
   }
+
+  // // Test API Code
+  // @Get("test")
+  // @UseGuards(Oauth2Guard({strict : true, isSignUp: true }))
+  // async test(@CurrentUser() user) {
+  //   console.log(user);
+  //   return "hi";
+  // }
 }
