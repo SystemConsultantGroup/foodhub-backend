@@ -1,5 +1,6 @@
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
+import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { winstonLogger } from "./config/logger/winston/logger";
@@ -24,6 +25,15 @@ async function bootstrap() {
   SwaggerModule.setup("api", app, document);
   app.use(cookieParser());
   const prismaService = app.get(PrismaService);
+
+  app.enableShutdownHooks();
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    })
+  );
 
   await app.listen(appConfig.get("app.port"));
 }
