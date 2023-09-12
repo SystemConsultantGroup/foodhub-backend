@@ -17,15 +17,11 @@ const types = {
   },
   AU003: {
     code: "AU003",
-    message: "Invalid Token (Wrong Format)",
+    message: "Expired Token",
   },
   AU004: {
     code: "AU004",
-    message: "Invalid Token (Wrong ISS)",
-  },
-  AU005: {
-    code: "AU004",
-    message: "Invalid Token (Wrong Signature)",
+    message: "Invalid Token",
   },
 };
 

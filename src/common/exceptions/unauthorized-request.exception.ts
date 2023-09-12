@@ -7,6 +7,10 @@ export class UnauthorizedException extends HttpException {
 }
 
 const types = {
+  AU005: {
+    code: "AU005",
+    message: "Expired Token",
+  },
   AU006: {
     code: "AU006",
     message: "Not Logged in",

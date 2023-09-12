@@ -36,14 +36,22 @@ export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
       });
       return user || { oauthId: oauthId };
     } else {
-      throw new BadRequestException("AU003");
+      throw new BadRequestException("AU004");
     }
   }
 
   private async verifyToken(token: string) {
     const decodedToken = jwt.decode(token, { complete: true });
 
-    // 1. Verify ISS
+    // 1. Check is Expired
+    try {
+      const currentTimestamp: number = Math.floor(Date.now() / 1000); // Get current timestamp in seconds
+      if (decodedToken.payload["exp"] < currentTimestamp) throw new BadRequestException("AU003");
+    } catch (error) {
+      throw new BadRequestException("AU003");
+    }
+
+    // 2. Verify ISS
     try {
       if (decodedToken.payload["iss"] !== "https://kauth.kakao.com") {
         throw new BadRequestException("AU004");
@@ -52,7 +60,7 @@ export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
       throw new BadRequestException("AU004");
     }
 
-    // 2. Verify Signature with Public Keys
+    // 3. Verify Signature with Public Keys
     let cachedKakaoPublicKeys = await this.cacheManager.get("kakaoPublicKeys");
 
     if (!cachedKakaoPublicKeys) {
@@ -61,7 +69,7 @@ export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
         cachedKakaoPublicKeys = response.data;
         await this.cacheManager.set("kakaoPublicKeys", cachedKakaoPublicKeys, 86400);
       } catch (error) {
-        throw new BadRequestException("AU005");
+        throw new BadRequestException("AU004");
       }
     }
     const kakaoPublicKeys = cachedKakaoPublicKeys["keys"];
@@ -69,7 +77,7 @@ export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
     const matchingPublicKey = kakaoPublicKeys.find((jwk) => jwk.kid === tokenkKid);
 
     if (!matchingPublicKey) {
-      throw new BadRequestException("AU005");
+      throw new BadRequestException("AU004");
     }
     const pemPublicKey = jwkToPem(matchingPublicKey);
 
@@ -79,7 +87,7 @@ export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
       });
       return decodedToken.payload.sub;
     } catch (error) {
-      throw new BadRequestException("AU005");
+      throw new BadRequestException("AU004");
     }
   }
 }

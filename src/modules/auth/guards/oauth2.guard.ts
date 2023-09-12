@@ -26,6 +26,7 @@ export const Oauth2Guard = (options?: { strict: boolean; isSignUp?: boolean }): 
       } catch (error) {
         // strict False
         if (!options?.strict) return true;
+        if (error.response.code === "AU003") throw new UnauthorizedException("AU005");
         if (error.response.code === "AU007") throw new UnauthorizedException("AU007");
         else throw new UnauthorizedException("AU006");
       }
