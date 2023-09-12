@@ -17,7 +17,7 @@ import { CurrentOauth2User } from "src/common/decorators/current-oauth2-user.dec
 @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
 @UseGuards(Oauth2Guard)
 export class VotesController {
-  constructor(private readonly votesService: VotesService) { }
+  constructor(private readonly votesService: VotesService) {}
 
   @Post(":groupId/votes")
   @ApiOperation({
@@ -37,10 +37,7 @@ export class VotesController {
     summary: "투표 전체 조회 API",
     description: "그룹 내 투표 전체를 조회합니다.",
   })
-  async getVotes(
-    @Param("groupId", ParseBigIntPipe) groupId: bigint,
-    @CurrentOauth2User() oauthId
-  ) {
+  async getVotes(@Param("groupId", ParseBigIntPipe) groupId: bigint, @CurrentOauth2User() oauthId) {
     console.log("test");
   }
 }

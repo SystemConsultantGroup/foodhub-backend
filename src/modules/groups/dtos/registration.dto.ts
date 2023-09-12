@@ -20,7 +20,6 @@ export class RegistrationDto {
     this.authority = registration.authority;
     this.isActivated = registration.isActivated;
     this.createdAt = registration.createdAt;
-    this.createdAt = registration.createdAt;
     this.updatedAt = registration.updatedAt;
     this.deletedAt = registration.deletedAt;
   }

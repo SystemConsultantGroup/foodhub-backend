@@ -16,7 +16,7 @@ import { PatchRegistrationDto } from "./dtos/patch-registration.dto";
 import { PatchInvitationDto } from "./dtos/patch-invitation.dto";
 import { PatchGroupDto } from "./dtos/patch-group.dto";
 import { randomBytes } from "crypto";
-import { bcrypt } from "bcrypt";
+import { genSalt, hash, compare } from "bcrypt";
 
 @Injectable()
 export class GroupsService {
@@ -25,8 +25,8 @@ export class GroupsService {
   async hash(password: string) {
     if (!password) return null;
     const saltRound = 10;
-    const salt = await bcrypt.genSalt(saltRound);
-    return await bcrypt.hash(password, salt);
+    const salt = await genSalt(saltRound);
+    return await hash(password, salt);
   }
 
   async createGroup(createGroupDto: CreateGroupDto, oauthId: string) {
@@ -168,7 +168,7 @@ export class GroupsService {
     });
 
     if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
-    if (!(await bcrypt.compare(group.password, hashedPassword)))
+    if (!(await compare(group.password, hashedPassword)))
       throw new UnauthorizedException("그룹 가입 비밀번호가 일치하지 않습니다");
 
     const registration = await this.prismaService.registration.findFirst({
