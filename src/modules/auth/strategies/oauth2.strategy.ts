@@ -1,5 +1,6 @@
+import { PrismaService } from "./../../../config/database/prisma.service";
 import { Request } from "express";
-import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { Strategy } from "passport-local";
 import { Cache } from "cache-manager";
@@ -7,10 +8,14 @@ import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import * as jwt from "jsonwebtoken";
 import * as jwkToPem from "jwk-to-pem";
 import axios from "axios";
+import { BadRequestException } from "../../../common/exceptions/bad-request-exception";
 
 @Injectable()
 export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
-  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
+  constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly prismaService: PrismaService
+  ) {
     super();
   }
 
@@ -18,11 +23,44 @@ export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
     const token = req.cookies["token"];
 
     if (!token) {
-      throw new UnauthorizedException("No access token found in cookie!");
+      throw new BadRequestException("AU002");
     }
-    // verify signature about token
 
-    // 1. Get KakaoPublic Keys
+    const oauthId = await this.verifyToken(token);
+
+    if (typeof oauthId === "string") {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          oauthId: oauthId,
+        },
+      });
+      return user || { oauthId: oauthId };
+    } else {
+      throw new BadRequestException("AU004");
+    }
+  }
+
+  private async verifyToken(token: string) {
+    const decodedToken = jwt.decode(token, { complete: true });
+
+    // 1. Check is Expired
+    try {
+      const currentTimestamp: number = Math.floor(Date.now() / 1000); // Get current timestamp in seconds
+      if (decodedToken.payload["exp"] < currentTimestamp) throw new BadRequestException("AU003");
+    } catch (error) {
+      throw new BadRequestException("AU003");
+    }
+
+    // 2. Verify ISS
+    try {
+      if (decodedToken.payload["iss"] !== "https://kauth.kakao.com") {
+        throw new BadRequestException("AU004");
+      }
+    } catch (error) {
+      throw new BadRequestException("AU004");
+    }
+
+    // 3. Verify Signature with Public Keys
     let cachedKakaoPublicKeys = await this.cacheManager.get("kakaoPublicKeys");
 
     if (!cachedKakaoPublicKeys) {
@@ -31,29 +69,25 @@ export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
         cachedKakaoPublicKeys = response.data;
         await this.cacheManager.set("kakaoPublicKeys", cachedKakaoPublicKeys, 86400);
       } catch (error) {
-        throw new Error("Error fetching or caching public keys.");
+        throw new BadRequestException("AU004");
       }
     }
-    // 2. Public Key to Pem to use verify signature
     const kakaoPublicKeys = cachedKakaoPublicKeys["keys"];
-    const decodedToken = jwt.decode(token, { complete: true });
     const tokenkKid = decodedToken.header.kid;
     const matchingPublicKey = kakaoPublicKeys.find((jwk) => jwk.kid === tokenkKid);
 
     if (!matchingPublicKey) {
-      throw new UnauthorizedException("Invalid access token");
+      throw new BadRequestException("AU004");
     }
     const pemPublicKey = jwkToPem(matchingPublicKey);
 
-    // 2. Verify with Public Keys
     try {
       jwt.verify(token, pemPublicKey, {
         algorithms: ["RS256"],
       });
-      const oauth2Id = decodedToken.payload.sub;
-      return oauth2Id;
+      return decodedToken.payload.sub;
     } catch (error) {
-      throw new UnauthorizedException("Invalid access token");
+      throw new BadRequestException("AU004");
     }
   }
 }
