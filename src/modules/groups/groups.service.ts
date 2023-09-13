@@ -84,6 +84,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -91,6 +92,7 @@ export class GroupsService {
     const group = await this.prismaService.group.findUnique({
       where: {
         id: groupId,
+        deletedAt: null,
       },
     });
     if (!group) throw new NotFoundException("그룹이 존재하지 않습니다");
@@ -99,6 +101,7 @@ export class GroupsService {
       where: {
         user: {
           oauthId,
+          deletedAt: null,
         },
         authority: 1,
       },
@@ -109,6 +112,7 @@ export class GroupsService {
       return await this.prismaService.group.update({
         where: {
           id: groupId,
+          deletedAt: null,
         },
         data: {
           ...(name && { name }),
@@ -127,6 +131,7 @@ export class GroupsService {
     const group = await this.prismaService.group.findUnique({
       where: {
         id: groupId,
+        deletedAt: null,
       },
       include: {
         area: {
@@ -157,6 +162,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -164,6 +170,7 @@ export class GroupsService {
     const group = await this.prismaService.group.findUnique({
       where: {
         id: groupId,
+        deletedAt: null,
       },
     });
 
@@ -222,6 +229,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -240,6 +248,7 @@ export class GroupsService {
       return await this.prismaService.registration.update({
         where: {
           id: registration.id,
+          deletedAt: null,
         },
         data: {
           nickname,
@@ -272,6 +281,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -279,6 +289,7 @@ export class GroupsService {
     const group = await this.prismaService.group.findUnique({
       where: {
         id: groupId,
+        deletedAt: null,
       },
     });
     if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
@@ -332,6 +343,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -341,6 +353,7 @@ export class GroupsService {
         userId: user.id,
         groupId,
         authority: 1,
+        deletedAt: null,
       },
     });
     if (!registration) throw new ForbiddenException("그룹 소유자만 수정이 가능합니다");
@@ -357,6 +370,7 @@ export class GroupsService {
       return await this.prismaService.registration.update({
         where: {
           id: registrationToPatch.id,
+          deletedAt: null,
         },
         data: {
           authority,
@@ -387,6 +401,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -396,6 +411,7 @@ export class GroupsService {
         userId: user.id,
         groupId,
         authority: 1,
+        deletedAt: null,
       },
     });
     if (!registration && userId != user.id)
@@ -415,6 +431,7 @@ export class GroupsService {
       return await this.prismaService.registration.update({
         where: {
           id: registrationToDelete.id,
+          deletedAt: null,
         },
         data: {
           deletedAt: new Date(Date.now()),
@@ -451,6 +468,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -458,6 +476,7 @@ export class GroupsService {
     const group = await this.prismaService.group.findUnique({
       where: {
         id: groupId,
+        deletedAt: null,
       },
     });
     if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
@@ -467,6 +486,7 @@ export class GroupsService {
         userId: user.id,
         groupId,
         authority: 1,
+        deletedAt: null,
       },
     });
     if (!registration) throw new ForbiddenException("그룹 소유자만 생성이 가능합니다");
@@ -508,6 +528,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -515,6 +536,7 @@ export class GroupsService {
     const group = await this.prismaService.group.findUnique({
       where: {
         id: groupId,
+        deletedAt: null,
       },
     });
     if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
@@ -523,6 +545,7 @@ export class GroupsService {
       where: {
         userId: user.id,
         groupId,
+        deletedAt: null,
       },
     });
     if (!registration) throw new ForbiddenException("그룹 멤버만 조회가 가능합니다");
@@ -564,6 +587,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -584,6 +608,7 @@ export class GroupsService {
         userId: user.id,
         groupId: invitation.group.id,
         authority: 1,
+        deletedAt: null,
       },
     });
     if (!registration) throw new ForbiddenException("그룹 소유자만 수정이 가능합니다");
@@ -593,11 +618,12 @@ export class GroupsService {
     try {
       return await this.prismaService.invitation.update({
         data: {
-          expireAt,
-          limitNumber,
+          ...(expireAt && { expireAt }),
+          ...(limitNumber && { limitNumber }),
         },
         where: {
           id: invitation.id,
+          deletedAt: null,
         },
         include: {
           group: {
@@ -624,6 +650,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -644,6 +671,7 @@ export class GroupsService {
         userId: user.id,
         groupId: invitation.group.id,
         authority: 1,
+        deletedAt: null,
       },
     });
     if (!registration) throw new ForbiddenException("그룹 소유자만 삭제가 가능합니다");
@@ -655,6 +683,7 @@ export class GroupsService {
         },
         where: {
           id: invitation.id,
+          deletedAt: null,
         },
         include: {
           group: {
@@ -681,6 +710,7 @@ export class GroupsService {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
+        deletedAt: null,
       },
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
@@ -714,6 +744,7 @@ export class GroupsService {
         },
         where: {
           id: invitation.id,
+          deletedAt: null,
         },
         include: {
           group: {

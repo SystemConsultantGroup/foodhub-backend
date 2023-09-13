@@ -1,5 +1,6 @@
 import { GroupDto } from "src/modules/groups/dtos/group.dto";
 import { VoteItemDto } from "./vote-item.dto";
+import { UserDto } from "src/modules/users/dtos/user.dto";
 
 export class VoteDto {
   id: string;
@@ -8,10 +9,12 @@ export class VoteDto {
   isSecret: boolean;
   isAppendable: boolean;
   isDraft: boolean;
+  isFixed: boolean;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date;
   voteItems: VoteItemDto[];
+  user: UserDto;
   group: GroupDto;
 
   constructor(vote) {
@@ -21,10 +24,12 @@ export class VoteDto {
     this.isSecret = vote.isSecret;
     this.isAppendable = vote.isAppendable;
     this.isDraft = vote.isDraft;
+    this.isFixed = vote.isFixed;
     this.createdAt = vote.createdAt;
     this.updatedAt = vote.updatedAt;
     this.deletedAt = vote.deletedAt;
     this.voteItems = vote.voteItems.map((voteItem) => new VoteItemDto(voteItem));
+    //this.user = new UserDto(vote.user);
     this.group = new GroupDto(vote.group);
   }
 }

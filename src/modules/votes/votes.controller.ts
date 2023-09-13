@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Body, Param, ParseIntPipe, Query } from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
@@ -37,7 +37,12 @@ export class VotesController {
     summary: "투표 전체 조회 API",
     description: "그룹 내 투표 전체를 조회합니다.",
   })
-  async getVotes(@Param("groupId", ParseBigIntPipe) groupId: bigint, @CurrentOauth2User() oauthId) {
+  async getVotes(
+    @Param("groupId", ParseBigIntPipe) groupId: bigint,
+    @Query("lastId", ParseBigIntPipe) pageNumber: bigint,
+    @Query("pageSize", ParseIntPipe) pageSize: number,
+    @CurrentOauth2User() oauthId
+  ) {
     console.log("test");
   }
 }

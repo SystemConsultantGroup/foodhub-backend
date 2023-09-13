@@ -31,6 +31,7 @@ model User {
   Files          File[]
   Reviews        Review[]
   VoteItemUserAs VoteItemUserA[]
+  Vote           Vote[]
 }
 
 model SidoArea {
@@ -186,11 +187,14 @@ model Vote {
   isSecret       Boolean
   isAppendable   Boolean
   isDraft        Boolean
+  isFixed        Boolean
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @default(now()) @updatedAt
   deletedAt      DateTime?
   VoteItems      VoteItem[]
+  userId         BigInt
   groupId        BigInt
+  user           User       @relation(fields: [userId], references: [id])
   group          Group      @relation(fields: [groupId], references: [id])
 }
 
