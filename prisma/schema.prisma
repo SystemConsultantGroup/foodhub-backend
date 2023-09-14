@@ -17,7 +17,7 @@ model User {
   nickname       String
   defaultPhotoId Int             @db.TinyInt // 1~6
   userPhotoUuid  String?
-  birthYear      DateTime?
+  birthYear      Int?
   gender         Int?            @db.TinyInt
   isActivated    Boolean
   createdAt      DateTime        @default(now())
