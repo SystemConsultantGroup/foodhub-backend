@@ -24,7 +24,7 @@ export class UserResponseDto {
   @ApiProperty({ required: false })
   file?: Partial<File>;
   @ApiProperty({ required: false })
-  birthYear?: Date;
+  birthYear?: number;
   @ApiProperty()
   isActivated: boolean;
   @ApiProperty()
