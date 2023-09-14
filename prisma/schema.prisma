@@ -14,6 +14,8 @@ model User {
   id             BigInt          @id @default(autoincrement())
   email          String          @unique
   password       String?
+  provider       Provider        @default(KAKAO)
+  oauthId        String?         @unique
   nickname       String
   defaultPhotoId Int             @db.TinyInt // 1~6
   userPhotoUuid  String?
@@ -214,4 +216,8 @@ model VoteItemUserA {
   userId    BigInt
   voteItem  VoteItem  @relation(fields: [itemId], references: [id])
   user      User      @relation(fields: [userId], references: [id])
+}
+
+enum Provider {
+  KAKAO
 }
