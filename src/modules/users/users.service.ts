@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { CreateUserDto } from "src/modules/users/dtos/create-user.dto";
+import { UpdateUserDto } from "src/modules/users/dtos/update-user.dto";
 import { User } from "@prisma/client";
 
 @Injectable()
@@ -47,7 +48,7 @@ export class UsersService {
     return res;
   }
 
-  async updateMe() {
+  async updateMe(updateUserDto: UpdateUserDto) {
     const res: Partial<User> & { file?: Partial<File> } = {
       id: BigInt(1),
       email: "sample@email.com",
@@ -62,7 +63,7 @@ export class UsersService {
       updatedAt: new Date("2023-01-10T10:00:00.000Z"),
       deletedAt: null,
     };
-    return res;
+    return { ...res, ...updateUserDto } as Partial<User> & { file?: Partial<File> };
   }
 
   async deleteMe() {

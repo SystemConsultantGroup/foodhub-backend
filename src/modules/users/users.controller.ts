@@ -11,6 +11,7 @@ import {
 import { UsersService } from "src/modules/users/users.service";
 import { CreateUserDto } from "src/modules/users/dtos/create-user.dto";
 import { UserResponseDto } from "src/modules/users/dtos/user-response.dto";
+import { UpdateUserDto } from "src/modules/users/dtos/update-user.dto";
 
 @ApiTags("유저 API")
 @Controller("users")
@@ -44,8 +45,8 @@ export class UsersController {
   }
 
   @Patch("me")
-  async updateMe() {
-    const updatedMyInfo = await this.usersService.updateMe();
+  async updateMe(@Body() updateUserDto: UpdateUserDto) {
+    const updatedMyInfo = await this.usersService.updateMe(updateUserDto);
     return new UserResponseDto(updatedMyInfo);
   }
 
