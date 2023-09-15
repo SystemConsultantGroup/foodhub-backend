@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import {
   IsAlphanumeric,
   IsBoolean,
-  IsDateString,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -26,8 +26,8 @@ export class UpdateUserDto {
 
   @ApiProperty({ description: "유저 생년" })
   @IsOptional()
-  @IsDateString()
-  birthYear?: string;
+  @IsInt()
+  birthYear?: number;
 
   @ApiProperty({ description: "유저 활성화 여부" })
   @IsOptional()
@@ -37,5 +37,5 @@ export class UpdateUserDto {
   @ApiProperty({ description: "유저 프로필 사진 정보" })
   @IsOptional()
   @ValidateNested({ each: true })
-  file?: File;
+  file?: Partial<File>;
 }

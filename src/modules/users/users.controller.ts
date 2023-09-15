@@ -1,8 +1,17 @@
-import { Body, Controller, Delete, Get, Patch, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import {
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -41,7 +50,6 @@ export class UsersController {
   })
   @ApiOkResponse({ type: UserResponseDto, description: "본인 정보 조회 성공" })
   @ApiUnauthorizedResponse({ description: "인증 실패 (유효한 토큰이 아니거나 토큰 없음)" })
-  @ApiNotFoundResponse({ description: "유저 없음" })
   @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
   async getMe(@CurrentUser() user: User) {
     const myInfo = await this.usersService.getMe(user);
@@ -49,14 +57,25 @@ export class UsersController {
   }
 
   @Patch("me")
-  async updateMe(@Body() updateUserDto: UpdateUserDto) {
-    const updatedMyInfo = await this.usersService.updateMe(updateUserDto);
-    // return new UserResponseDto(updatedMyInfo);
+  @UseGuards(Oauth2Guard({ strict: true }))
+  @ApiOperation({
+    summary: "본인 정보 수정",
+    description: "본인의 유저 정보를 수정한다.",
+  })
+  @ApiOkResponse({ type: UserResponseDto, description: "본인 정보 수정 성공" })
+  @ApiUnauthorizedResponse({ description: "인증 실패 (유효한 토큰이 아니거나 토큰 없음)" })
+  @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
+  async updateMe(@Body() updateUserDto: UpdateUserDto, @CurrentUser() user: User) {
+    const updatedMyInfo = await this.usersService.updateMe(updateUserDto, user);
+    return new UserResponseDto(updatedMyInfo);
   }
 
   @Delete("me")
-  async deleteMe() {
-    const res = await this.usersService.deleteMe();
-    return res;
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(Oauth2Guard({ strict: true }))
+  @ApiUnauthorizedResponse({ description: "인증 실패 (유효한 토큰이 아니거나 토큰 없음)" })
+  @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
+  async deleteMe(@CurrentUser() user: User) {
+    await this.usersService.deleteMe(user);
   }
 }
