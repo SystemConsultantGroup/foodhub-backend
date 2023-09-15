@@ -2,11 +2,12 @@ import { File, User } from "@prisma/client";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class UserResponseDto {
-  constructor(user: Partial<User> & { file?: Partial<File> }) {
+  constructor(user: User & { Files: Partial<File>[] }) {
     this.id = Number(user.id);
+    this.email = user.email;
     this.nickname = user.nickname;
     this.defaultPhotoId = user.defaultPhotoId;
-    this.file = user.file;
+    this.file = user.Files[0];
     this.birthYear = user.birthYear;
     this.isActivated = user.isActivated;
     this.createdAt = user.createdAt;

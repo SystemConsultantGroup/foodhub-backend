@@ -18,7 +18,6 @@ model User {
   oauthId        String?         @unique
   nickname       String
   defaultPhotoId Int             @db.TinyInt // 1~6
-  userPhotoUuid  String?
   birthYear      Int?
   gender         Int?            @db.TinyInt
   isActivated    Boolean
