@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  ApiBadRequestResponse,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -31,15 +32,20 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @UseGuards(Oauth2Guard({ strict: true, isSignUp: true }))
   @ApiOperation({
     summary: "회원가입",
     description: "카카오 로그인 정보를 통해 유저를 DB에 추가한다.",
   })
   @ApiCreatedResponse({ type: UserResponseDto, description: "회원가입 성공" })
+  @ApiBadRequestResponse({ description: "이미 가입한 소셜 아이디" })
   @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
-  async createUser(@Body() createUserDto: CreateUserDto) {
-    const userInfo = await this.usersService.createUser(createUserDto);
-    // return new UserResponseDto(userInfo);
+  async createUser(
+    @Body() createUserDto: CreateUserDto,
+    @CurrentUser() user: { oauthId: string; email: string }
+  ) {
+    const userInfo = await this.usersService.createUser(createUserDto, user);
+    return new UserResponseDto(userInfo);
   }
 
   @Get("me")
