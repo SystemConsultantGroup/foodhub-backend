@@ -12,7 +12,7 @@ datasource db {
 
 model User {
   id             BigInt          @id @default(autoincrement())
-  email          String          @unique
+  email          String?         @unique
   password       String?
   provider       Provider        @default(KAKAO)
   oauthId        String?         @unique
