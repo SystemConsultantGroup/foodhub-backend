@@ -17,10 +17,11 @@ import { PatchGroupDto } from "./dtos/patch-group.dto";
 import { TransferFounderDto } from "./dtos/transfer-founder.dto";
 import { randomBytes } from "crypto";
 import { genSalt, hash, compare } from "bcrypt";
+import { User } from "@prisma/client";
 
 @Injectable()
 export class GroupsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) { }
 
   async hash(password: string) {
     if (!password) return null;
@@ -29,15 +30,9 @@ export class GroupsService {
     return await hash(password, salt);
   }
 
-  async createGroup(createGroupDto: CreateGroupDto, oauthId: string) {
+  async createGroup(createGroupDto: CreateGroupDto, user: User) {
     const { name, type, areaId, isPublic, password, nickname, fileUUID } = createGroupDto;
 
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
     const hashedPassword = await this.hash(password);
 
     try {
@@ -99,16 +94,8 @@ export class GroupsService {
     }
   }
 
-  async patchGroup(groupId: bigint, patchGroupDto: PatchGroupDto, oauthId: string) {
+  async patchGroup(groupId: bigint, patchGroupDto: PatchGroupDto, user: User) {
     const { name, type, areaId, isPublic, password, fileUUID } = patchGroupDto;
-
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const group = await this.prismaService.group.findUnique({
       where: {
@@ -121,7 +108,7 @@ export class GroupsService {
     const registration = await this.prismaService.registration.findFirst({
       where: {
         user: {
-          oauthId,
+          id: user.id,
           deletedAt: null,
         },
         authority: 1,
@@ -207,17 +194,9 @@ export class GroupsService {
   async createRegistration(
     groupId: bigint,
     createRegistrationDto: CreateRegistrationDto,
-    oauthId: string
+    user: User
   ) {
     const { password } = createRegistrationDto;
-
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const group = await this.prismaService.group.findUnique({
       where: {
@@ -275,16 +254,9 @@ export class GroupsService {
   async patchMyRegistration(
     groupId: bigint,
     patchMyRegistrationDto: PatchMyRegistrationDto,
-    oauthId: string
+    user: User
   ) {
     const { nickname } = patchMyRegistrationDto;
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const registration = await this.prismaService.registration.findFirst({
       where: {
@@ -329,14 +301,7 @@ export class GroupsService {
     }
   }
 
-  async getRegistrations(groupId: bigint, lastId: bigint, pageSize: number, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async getRegistrations(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
 
     const group = await this.prismaService.group.findUnique({
       where: {
@@ -391,17 +356,9 @@ export class GroupsService {
     groupId: bigint,
     userId: bigint,
     patchRegistrationDto: PatchRegistrationDto,
-    oauthId: string
+    user: User
   ) {
     const { authority } = patchRegistrationDto;
-
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const registration = await this.prismaService.registration.findFirst({
       where: {
@@ -455,14 +412,7 @@ export class GroupsService {
     }
   }
 
-  async deleteRegistration(groupId: bigint, userId: bigint, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async deleteRegistration(groupId: bigint, userId: bigint, user: User) {
 
     const registration = await this.prismaService.registration.findFirst({
       where: {
@@ -516,15 +466,8 @@ export class GroupsService {
     }
   }
 
-  async transferFounder(groupId: bigint, transferFounderDto: TransferFounderDto, oauthId: string) {
+  async transferFounder(groupId: bigint, transferFounderDto: TransferFounderDto, user: User) {
     const { userId } = transferFounderDto;
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const registration = await this.prismaService.registration.findFirst({
       where: {
@@ -588,17 +531,9 @@ export class GroupsService {
   async createInvitation(
     groupId: bigint,
     createInvitationDto: CreateInvitationDto,
-    oauthId: string
+    user: User
   ) {
     const { expireAt, limitNumber } = createInvitationDto;
-
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const group = await this.prismaService.group.findUnique({
       where: {
@@ -651,14 +586,7 @@ export class GroupsService {
     }
   }
 
-  async getInvitation(groupId: bigint, lastId: bigint, pageSize: number, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async getInvitation(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
 
     const group = await this.prismaService.group.findUnique({
       where: {
@@ -710,17 +638,9 @@ export class GroupsService {
   async patchInvitation(
     invitationId: bigint,
     patchInvitationDto: PatchInvitationDto,
-    oauthId: string
+    user: User
   ) {
     const { expireAt, limitNumber } = patchInvitationDto;
-
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const invitation = await this.prismaService.invitation.findUnique({
       where: {
@@ -776,14 +696,7 @@ export class GroupsService {
     }
   }
 
-  async deleteInvitation(invitationId: bigint, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async deleteInvitation(invitationId: bigint, user: User) {
 
     const invitation = await this.prismaService.invitation.findUnique({
       where: {
@@ -836,14 +749,7 @@ export class GroupsService {
     }
   }
 
-  async useInvitation(link: string, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async useInvitation(link: string, user: User) {
 
     const invitation = await this.prismaService.invitation.findFirst({
       where: {

@@ -12,20 +12,14 @@ import { CreateVoteItemDto } from "./dtos/create-vote-item.dto";
 import { CreateVoteDto } from "./dtos/create-vote.dto";
 import { PatchVoteItemDto } from "./dtos/patch-vote-item.dto";
 import { PatchVoteDto } from "./dtos/patch-vote.dto";
+import { User } from "@prisma/client";
 
 @Injectable()
 export class VotesService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) { }
 
-  async createVote(groupId: bigint, createVoteDto: CreateVoteDto, oauthId: string) {
+  async createVote(groupId: bigint, createVoteDto: CreateVoteDto, user: User) {
     const { name, isDuplicatable, isSecret, isAppendable, isDraft } = createVoteDto;
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const registration = await this.prismaService.registration.findFirst({
       where: {
@@ -59,14 +53,7 @@ export class VotesService {
     }
   }
 
-  async getVotes(groupId: bigint, lastId: bigint, pageSize: number, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async getVotes(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
 
     const registration = await this.prismaService.registration.findFirst({
       where: {
@@ -93,14 +80,7 @@ export class VotesService {
     });
   }
 
-  async getVote(voteId: bigint, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async getVote(voteId: bigint, user: User) {
 
     const vote = await this.prismaService.vote.findFirst({
       where: {
@@ -127,15 +107,8 @@ export class VotesService {
     return vote;
   }
 
-  async patchVote(voteId: bigint, patchVoteDto: PatchVoteDto, oauthId: string) {
+  async patchVote(voteId: bigint, patchVoteDto: PatchVoteDto, user: User) {
     const { name, isDuplicatable, isSecret, isAppendable, isDraft } = patchVoteDto;
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const vote = await this.prismaService.vote.findFirst({
       where: {
@@ -187,14 +160,7 @@ export class VotesService {
     }
   }
 
-  async deleteVote(voteId: bigint, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async deleteVote(voteId: bigint, user: User) {
 
     const vote = await this.prismaService.vote.findFirst({
       where: {
@@ -245,15 +211,8 @@ export class VotesService {
     }
   }
 
-  async createVoteItem(voteId: bigint, createVoteItemDto: CreateVoteItemDto, oauthId: string) {
+  async createVoteItem(voteId: bigint, createVoteItemDto: CreateVoteItemDto, user: User) {
     const { restaurantName, restaurantId } = createVoteItemDto;
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const vote = await this.prismaService.vote.findFirst({
       where: {
@@ -306,15 +265,8 @@ export class VotesService {
     }
   }
 
-  async patchVoteItem(itemId: bigint, patchVoteItemDto: PatchVoteItemDto, oauthId: string) {
+  async patchVoteItem(itemId: bigint, patchVoteItemDto: PatchVoteItemDto, user: User) {
     const { restaurantName, restaurantId } = patchVoteItemDto;
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
 
     const item = await this.prismaService.voteItem.findFirst({
       where: {
@@ -352,15 +304,7 @@ export class VotesService {
     }
   }
 
-  async createVoteItemUserA(itemId: bigint, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
-
+  async createVoteItemUserA(itemId: bigint, user: User) {
     const item = await this.prismaService.voteItem.findUnique({
       where: {
         id: itemId,
@@ -438,14 +382,7 @@ export class VotesService {
     }
   }
 
-  async getVoteItemUserAs(itemId: bigint, lastId: bigint, pageSize: number, oauthId: string) {
-    const user = await this.prismaService.user.findFirst({
-      where: {
-        oauthId,
-        deletedAt: null,
-      },
-    });
-    if (!user) throw new UnauthorizedException("Invalid Authorization");
+  async getVoteItemUserAs(itemId: bigint, lastId: bigint, pageSize: number, user: User) {
 
     const item = await this.prismaService.voteItem.findUnique({
       where: {
