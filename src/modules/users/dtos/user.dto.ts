@@ -1,3 +1,7 @@
 export class UserDto {
-  constructor(userDto: UserDto) {}
+  id: bigint;
+
+  constructor(userDto: UserDto) {
+    this.id = userDto.id;
+  }
 }

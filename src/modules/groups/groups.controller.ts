@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Body, Param, Query, ValidationPipe } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiInternalServerErrorResponse } from "@nestjs/swagger";
 import { CreateGroupDto } from "./dtos/create-group.dto";
 import { GroupDto } from "./dtos/group.dto";
@@ -15,6 +15,8 @@ import { ParseBigIntPipe } from "src/common/pipes/pipes";
 import { PatchMyRegistrationDto } from "./dtos/patch-my-registration.dto";
 import { PatchInvitationDto } from "./dtos/patch-invitation.dto";
 import { PatchGroupDto } from "./dtos/patch-group.dto";
+import { PaginationDto } from "src/common/dtos/pagination.dto";
+import { TransferFounderDto } from "./dtos/transfer-founder.dto";
 
 @Controller("groups")
 @ApiTags("그룹 API")
@@ -104,9 +106,16 @@ export class GroupsController {
   })
   async getRegistration(
     @Param("groupId", ParseBigIntPipe) groupId: bigint,
+    @Query(new ValidationPipe({ transform: true })) paginationDto: PaginationDto,
     @CurrentOauth2User() oauthId: string
   ) {
-    const registrations = await this.groupsService.getRegistration(groupId, oauthId);
+    const { lastId, pageSize } = paginationDto;
+    const registrations = await this.groupsService.getRegistrations(
+      groupId,
+      lastId,
+      pageSize,
+      oauthId
+    );
     return registrations.map((registration) => new RegistrationDto(registration));
   }
 
@@ -144,6 +153,24 @@ export class GroupsController {
     return new RegistrationDto(registration);
   }
 
+  @Post(":groupId/transfer")
+  @ApiOperation({
+    summary: "그룹 소유권 이전 API",
+    description: "그룹 소유권을 다른 멤버에게 이전한다.",
+  })
+  async transferFounder(
+    @Param("groupId", ParseBigIntPipe) groupId: bigint,
+    @Body() transferFounderDto: TransferFounderDto,
+    @CurrentOauth2User() oauthId: string
+  ) {
+    const registration = await this.groupsService.transferFounder(
+      groupId,
+      transferFounderDto,
+      oauthId
+    );
+    return new RegistrationDto(registration);
+  }
+
   @Post(":groupId/invitations")
   @ApiOperation({
     summary: "초대 링크 생성 API",
@@ -169,9 +196,11 @@ export class GroupsController {
   })
   async getInvitation(
     @Param("groupId", ParseBigIntPipe) groupId: bigint,
+    @Query(new ValidationPipe({ transform: true })) paginationDto: PaginationDto,
     @CurrentOauth2User() oauthId: string
   ) {
-    const invitations = await this.groupsService.getInvitation(groupId, oauthId);
+    const { lastId, pageSize } = paginationDto;
+    const invitations = await this.groupsService.getInvitation(groupId, lastId, pageSize, oauthId);
     return invitations.map((invitation) => new InviationDto(invitation));
   }
 }

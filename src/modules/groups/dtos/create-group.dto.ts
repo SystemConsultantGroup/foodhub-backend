@@ -12,6 +12,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  IsUUID,
 } from "class-validator";
 
 export class CreateGroupDto {
@@ -54,4 +55,10 @@ export class CreateGroupDto {
   @MinLength(0)
   @MaxLength(100)
   nickname: string;
+
+  @ApiProperty({ description: "단체 이미지 파일 uuid" })
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
+  fileUUID: string;
 }

@@ -1,9 +1,9 @@
-import { Payload } from "src/common/dtos/user.payload";
+import { UserDto } from "src/modules/users/dtos/user.dto";
 import { GroupDto } from "./group.dto";
 
 export class RegistrationDto {
   id: string;
-  user: Payload;
+  user: UserDto;
   group: GroupDto;
   nickname: string;
   authority: number;
@@ -14,7 +14,7 @@ export class RegistrationDto {
 
   constructor(registration) {
     this.id = registration.id.toString();
-    this.user = registration.user;
+    this.user = new UserDto(registration.user);
     this.group = new GroupDto(registration.group);
     this.nickname = registration.nickname;
     this.authority = registration.authority;
