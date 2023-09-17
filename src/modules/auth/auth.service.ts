@@ -1,8 +1,9 @@
 import { PrismaService } from "./../../config/database/prisma.service";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import axios from "axios";
 import * as jwt from "jsonwebtoken";
+import { BadRequestException } from "../../common/exceptions/bad-request-exception";
 
 @Injectable()
 export class AuthService {
@@ -29,7 +30,7 @@ export class AuthService {
 
       return response.data.id_token;
     } catch (error) {
-      throw new BadRequestException("카카오 인가코드 인증에 실패하였습니다");
+      throw new BadRequestException("AU001");
     }
   }
 
@@ -44,7 +45,7 @@ export class AuthService {
       });
       return user;
     } else {
-      throw new BadRequestException("Invalid Token");
+      throw new BadRequestException("AU003");
     }
   }
 }
