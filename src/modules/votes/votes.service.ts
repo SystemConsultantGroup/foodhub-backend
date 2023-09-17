@@ -10,6 +10,7 @@ import {
 import { PrismaService } from "src/config/database/prisma.service";
 import { CreateVoteItemDto } from "./dtos/create-vote-item.dto";
 import { CreateVoteDto } from "./dtos/create-vote.dto";
+import { PatchVoteItemDto } from "./dtos/patch-vote-item.dto";
 import { PatchVoteDto } from "./dtos/patch-vote.dto";
 
 @Injectable()
@@ -147,6 +148,16 @@ export class VotesService {
         group: true,
       },
     });
+
+    const registration = await this.prismaService.registration.findFirst({
+      where: {
+        user,
+        groupId: vote.groupId,
+        deletedAt: null,
+      },
+    });
+    if (!registration) throw new ForbiddenException("그룹 멤버만 투표 수정이 가능합니다");
+
     if (!vote) throw new NotFoundException("존재하지 않는 투표입니다");
     if (vote.userId != user.id)
       throw new ForbiddenException("투표 제작자만 투표를 수정할 수 있습니다");
@@ -251,22 +262,89 @@ export class VotesService {
       },
     });
     if (!vote) throw new NotFoundException("존재하지 않는 투표입니다");
-    if (vote.isFixed)
-      throw new ForbiddenException("이미 참여자가 있는 투표에는 항목을 추가할 수 없습니다");
     if (vote.userId != user.id) {
-      if (!vote.isAppendable) throw new ForbiddenException("항목 추가가 가능한 투표가 아닙니다");
-      else throw new ForbiddenException("투표 제작자만 투표를 수정할 수 있습니다");
+      if (vote.isAppendable) {
+        const registration = await this.prismaService.registration.findFirst({
+          where: {
+            userId: user.id,
+            groupId: vote.groupId,
+            deletedAt: null,
+          },
+        });
+        if (!registration) throw new ForbiddenException("그룹 멤버만 투표 항목 생성이 가능합니다");
+      } else throw new ForbiddenException("투표 제작자만 투표를 수정할 수 있습니다");
     }
+
     if ((!restaurantName && !restaurantId) || (restaurantName && restaurantId))
       throw new BadRequestException("식당 이름과 아이디 중 하나의 값을 가져야 합니다");
 
     try {
-      return await this.prismaService.voteItem.create({
+      const item = await this.prismaService.voteItem.create({
         data: {
           ...(restaurantName && { restaurantName }),
           ...(restaurantId && { restaurantId }),
           score: 0,
           voteId,
+        },
+      });
+
+      if (!vote.isFixed) {
+        await this.prismaService.vote.update({
+          where: {
+            id: voteId,
+            deletedAt: null,
+          },
+          data: {
+            isFixed: true,
+          },
+        });
+      }
+
+      return item;
+    } catch (e) {
+      throw new InternalServerErrorException(e);
+    }
+  }
+
+  async patchVoteItem(itemId: bigint, patchVoteItemDto: PatchVoteItemDto, oauthId: string) {
+    const { restaurantName, restaurantId } = patchVoteItemDto;
+    const user = await this.prismaService.user.findFirst({
+      where: {
+        oauthId,
+        deletedAt: null,
+      },
+    });
+    if (!user) throw new UnauthorizedException("Invalid Authorization");
+
+    const item = await this.prismaService.voteItem.findFirst({
+      where: {
+        id: itemId,
+        deletedAt: null,
+      },
+      include: {
+        vote: {
+          include: {
+            group: true,
+          },
+        },
+      },
+    });
+    const vote = item.vote;
+    if (!item) throw new NotFoundException("존재하지 않는 투표 항목입니다");
+    if (vote.userId != user.id)
+      throw new ForbiddenException("투표 제작자만 투표를 수정할 수 있습니다");
+    if (vote.isFixed) throw new ForbiddenException("이미 참여자가 있는 투표는 수정할 수 없습니다");
+    if ((!restaurantName && !restaurantId) || (restaurantName && restaurantId))
+      throw new BadRequestException("식당 이름과 아이디 중 하나의 값을 가져야 합니다");
+    try {
+      return await this.prismaService.voteItem.update({
+        where: {
+          id: itemId,
+          deletedAt: null,
+        },
+        data: {
+          ...(restaurantName && { restaurantName }),
+          ...(restaurantId && { restaurantId }),
         },
       });
     } catch (e) {
@@ -292,7 +370,15 @@ export class VotesService {
         vote: true,
       },
     });
-    if (item.vote.isDraft) throw new ForbiddenException("");
+    const registration = await this.prismaService.registration.findFirst({
+      where: {
+        user,
+        groupId: item.vote.groupId,
+        deletedAt: null,
+      },
+    });
+    if (!registration) throw new ForbiddenException("그룹 멤버만 투표 참여가 가능합니다");
+    if (item.vote.isDraft) throw new ForbiddenException("임시저장본에는 투표가 불가합니다");
     if (!item) throw new NotFoundException("존재하지 않는 투표항목입니다");
     if (!item.vote.isAppendable && item.vote.isFixed && item.vote.userId != user.id)
       throw new ForbiddenException("투표 항목을 추가할 수 없는 투표입니다");
@@ -323,6 +409,16 @@ export class VotesService {
         },
       });
 
+      await this.prismaService.voteItem.update({
+        where: {
+          id: itemId,
+          deletedAt: null,
+        },
+        data: {
+          score: item.score + 1,
+        },
+      });
+
       return await this.prismaService.voteItemUserA.create({
         data: {
           itemId,
@@ -342,7 +438,7 @@ export class VotesService {
     }
   }
 
-  async getVoteItemUserAs(itemId: bigint, oauthId: string) {
+  async getVoteItemUserAs(itemId: bigint, lastId: bigint, pageSize: number, oauthId: string) {
     const user = await this.prismaService.user.findFirst({
       where: {
         oauthId,
@@ -351,11 +447,32 @@ export class VotesService {
     });
     if (!user) throw new UnauthorizedException("Invalid Authorization");
 
-    const voteItemUserA = await this.prismaService.voteItemUserA.findMany({
+    const item = await this.prismaService.voteItem.findUnique({
+      where: {
+        id: itemId,
+        deletedAt: null,
+      },
+      include: {
+        vote: true,
+      },
+    });
+    const registration = await this.prismaService.registration.findFirst({
+      where: {
+        user,
+        groupId: item.vote.groupId,
+        deletedAt: null,
+      },
+    });
+    if (!registration) throw new ForbiddenException("그룹 멤버만 투표 참여가 가능합니다");
+
+    return await this.prismaService.voteItemUserA.findMany({
       where: {
         userId: user.id,
         itemId,
       },
+      take: pageSize,
+      skip: lastId ? 1 : 0,
+      ...(lastId && { cursor: { id: lastId } }),
       include: {
         voteItem: {
           include: {
@@ -367,12 +484,3 @@ export class VotesService {
     });
   }
 }
-
-/*
-
-TODO:
-그룹 멤버인지 확인 부분 다 추가하기
-투표 항목 수정 api 추가
-투표 항목 참여자 조회 api 추가
-
-*/
