@@ -21,7 +21,7 @@ import { User } from "@prisma/client";
 
 @Injectable()
 export class GroupsService {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
 
   async hash(password: string) {
     if (!password) return null;
@@ -302,7 +302,6 @@ export class GroupsService {
   }
 
   async getRegistrations(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
-
     const group = await this.prismaService.group.findUnique({
       where: {
         id: groupId,
@@ -413,7 +412,6 @@ export class GroupsService {
   }
 
   async deleteRegistration(groupId: bigint, userId: bigint, user: User) {
-
     const registration = await this.prismaService.registration.findFirst({
       where: {
         userId: user.id,
@@ -528,11 +526,7 @@ export class GroupsService {
     }
   }
 
-  async createInvitation(
-    groupId: bigint,
-    createInvitationDto: CreateInvitationDto,
-    user: User
-  ) {
+  async createInvitation(groupId: bigint, createInvitationDto: CreateInvitationDto, user: User) {
     const { expireAt, limitNumber } = createInvitationDto;
 
     const group = await this.prismaService.group.findUnique({
@@ -587,7 +581,6 @@ export class GroupsService {
   }
 
   async getInvitation(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
-
     const group = await this.prismaService.group.findUnique({
       where: {
         id: groupId,
@@ -635,11 +628,7 @@ export class GroupsService {
     }
   }
 
-  async patchInvitation(
-    invitationId: bigint,
-    patchInvitationDto: PatchInvitationDto,
-    user: User
-  ) {
+  async patchInvitation(invitationId: bigint, patchInvitationDto: PatchInvitationDto, user: User) {
     const { expireAt, limitNumber } = patchInvitationDto;
 
     const invitation = await this.prismaService.invitation.findUnique({
@@ -697,7 +686,6 @@ export class GroupsService {
   }
 
   async deleteInvitation(invitationId: bigint, user: User) {
-
     const invitation = await this.prismaService.invitation.findUnique({
       where: {
         id: invitationId,
@@ -750,7 +738,6 @@ export class GroupsService {
   }
 
   async useInvitation(link: string, user: User) {
-
     const invitation = await this.prismaService.invitation.findFirst({
       where: {
         link,

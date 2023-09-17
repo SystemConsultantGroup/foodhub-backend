@@ -30,7 +30,7 @@ import { User } from "@prisma/client";
 @ApiTags("투표 API - 생성, 전체 조회")
 @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
 export class VotesControllerGroups {
-  constructor(private readonly votesService: VotesService) { }
+  constructor(private readonly votesService: VotesService) {}
 
   @Post(":groupId/votes")
   @UseGuards(Oauth2Guard({ strict: true, isSignUp: true }))
@@ -69,7 +69,7 @@ export class VotesControllerGroups {
 @ApiTags("투표 API")
 @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
 export class VotesControllerVotes {
-  constructor(private readonly votesService: VotesService) { }
+  constructor(private readonly votesService: VotesService) {}
 
   @Get(":voteId")
   @UseGuards(Oauth2Guard({ strict: true, isSignUp: true }))
@@ -127,9 +127,8 @@ export class VotesControllerVotes {
 @Controller("items")
 @ApiTags("투표 API")
 @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
-@UseGuards(Oauth2Guard)
 export class VotesControllerItems {
-  constructor(private readonly votesService: VotesService) { }
+  constructor(private readonly votesService: VotesService) {}
 
   @Patch(":itemId")
   @UseGuards(Oauth2Guard({ strict: true, isSignUp: true }))
@@ -172,12 +171,7 @@ export class VotesControllerItems {
     @CurrentUser() user: User
   ) {
     const { lastId, pageSize } = paginationDto;
-    const voteItemUserA = await this.votesService.getVoteItemUserAs(
-      voteId,
-      lastId,
-      pageSize,
-      user
-    );
+    const voteItemUserA = await this.votesService.getVoteItemUserAs(voteId, lastId, pageSize, user);
     return voteItemUserA.map((voteItemUserA) => new VoteItemUserADto(voteItemUserA));
   }
 }

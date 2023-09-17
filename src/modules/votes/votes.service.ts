@@ -16,7 +16,7 @@ import { User } from "@prisma/client";
 
 @Injectable()
 export class VotesService {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
 
   async createVote(groupId: bigint, createVoteDto: CreateVoteDto, user: User) {
     const { name, isDuplicatable, isSecret, isAppendable, isDraft } = createVoteDto;
@@ -54,7 +54,6 @@ export class VotesService {
   }
 
   async getVotes(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
-
     const registration = await this.prismaService.registration.findFirst({
       where: {
         user,
@@ -81,7 +80,6 @@ export class VotesService {
   }
 
   async getVote(voteId: bigint, user: User) {
-
     const vote = await this.prismaService.vote.findFirst({
       where: {
         id: voteId,
@@ -161,7 +159,6 @@ export class VotesService {
   }
 
   async deleteVote(voteId: bigint, user: User) {
-
     const vote = await this.prismaService.vote.findFirst({
       where: {
         id: voteId,
@@ -383,7 +380,6 @@ export class VotesService {
   }
 
   async getVoteItemUserAs(itemId: bigint, lastId: bigint, pageSize: number, user: User) {
-
     const item = await this.prismaService.voteItem.findUnique({
       where: {
         id: itemId,

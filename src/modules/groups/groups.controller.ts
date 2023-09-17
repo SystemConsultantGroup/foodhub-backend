@@ -23,7 +23,7 @@ import { User } from "@prisma/client";
 @ApiTags("그룹 API")
 @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) { }
+  constructor(private readonly groupsService: GroupsService) {}
 
   @Post()
   @UseGuards(Oauth2Guard({ strict: true, isSignUp: true }))
@@ -216,7 +216,7 @@ export class GroupsController {
 @ApiTags("그룹의 초대 API")
 @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
 export class InvitationsController {
-  constructor(private readonly groupsService: GroupsService) { }
+  constructor(private readonly groupsService: GroupsService) {}
 
   @Patch(":invitationId")
   @UseGuards(Oauth2Guard({ strict: true, isSignUp: true }))
