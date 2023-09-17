@@ -20,7 +20,7 @@ import { genSalt, hash, compare } from "bcrypt";
 
 @Injectable()
 export class GroupsService {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
 
   async hash(password: string) {
     if (!password) return null;

@@ -12,6 +12,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  IsUUID,
 } from "class-validator";
 
 export class PatchGroupDto {
@@ -52,4 +53,10 @@ export class PatchGroupDto {
   @IsString()
   @IsOptional()
   password: string;
+
+  @ApiProperty({ description: "단체 이미지 파일 uuid" })
+  @IsUUID()
+  @IsNotEmpty()
+  @IsOptional()
+  fileUUID: string;
 }
