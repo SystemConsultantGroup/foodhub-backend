@@ -82,7 +82,7 @@ export class VotesService {
         groupId,
         deletedAt: null,
       },
-      take: pageSize,
+      take: pageSize ? pageSize : 10,
       skip: lastId ? 1 : 0,
       ...(lastId && { cursor: { id: lastId } }),
       include: {
@@ -470,7 +470,7 @@ export class VotesService {
         userId: user.id,
         itemId,
       },
-      take: pageSize,
+      take: pageSize ? pageSize : 10,
       skip: lastId ? 1 : 0,
       ...(lastId && { cursor: { id: lastId } }),
       include: {
