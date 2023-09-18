@@ -24,8 +24,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, document);
   app.use(cookieParser());
-  const prismaService = app.get(PrismaService);
-
   app.enableShutdownHooks();
 
   app.useGlobalPipes(
