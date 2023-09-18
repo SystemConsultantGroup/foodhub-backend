@@ -1,4 +1,3 @@
-import { SidoAreaDto } from "./sido-area.dto";
 import { SiggAreaDto } from "./sigg-area.dto";
 
 export class EmdAreaDto {

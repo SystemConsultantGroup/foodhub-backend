@@ -5,7 +5,6 @@ import {
   Patch,
   Body,
   Param,
-  ParseIntPipe,
   Query,
   Delete,
   ValidationPipe,

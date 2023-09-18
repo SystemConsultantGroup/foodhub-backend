@@ -1,14 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-  MaxLength,
-  MinLength,
-  IsPositive,
-} from "class-validator";
+import { IsBoolean, IsNotEmpty, IsString, MinLength } from "class-validator";
 
 export class CreateVoteDto {
   @ApiProperty({ description: "투표 이름" })

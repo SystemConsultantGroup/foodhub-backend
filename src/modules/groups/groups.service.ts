@@ -79,7 +79,7 @@ export class GroupsService {
           });
         }
 
-        const registration = await tx.registration.create({
+        await tx.registration.create({
           data: {
             userId: user.id,
             groupId: group.id,

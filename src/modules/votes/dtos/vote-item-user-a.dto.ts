@@ -1,4 +1,3 @@
-import { User, VoteItem } from "@prisma/client";
 import { VoteItemDto } from "./vote-item.dto";
 
 export class VoteItemUserADto {
