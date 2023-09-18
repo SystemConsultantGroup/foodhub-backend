@@ -4,7 +4,6 @@ import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { winstonLogger } from "./config/logger/winston/logger";
-import { PrismaService } from "./config/database/prisma.service";
 import * as cookieParser from "cookie-parser";
 
 async function bootstrap() {
