@@ -19,9 +19,10 @@ export class VoteItemDto {
     this.createdAt = voteItem.createdAt;
     this.updatedAt = voteItem.updatedAt;
     this.deletedAt = voteItem.deletedAt;
-    this.voteItemUserAs = voteItem.voteItemUserAs.map(
-      (voteItemUserA) => new VoteItemUserADto(voteItemUserA)
-    );
-    this.vote = new VoteDto(voteItem.vote);
+    if (voteItem.voteItemUserAs)
+      this.voteItemUserAs = voteItem.voteItemUserAs.map(
+        (voteItemUserA) => new VoteItemUserADto(voteItemUserA)
+      );
+    if (voteItem.vote) this.vote = new VoteDto(voteItem.vote);
   }
 }
