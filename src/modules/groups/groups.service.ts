@@ -31,124 +31,152 @@ export class GroupsService {
   }
 
   async createGroup(createGroupDto: CreateGroupDto, user: User) {
-    const { name, type, areaId, isPublic, password, nickname, fileUUID } = createGroupDto;
+    return await this.prismaService.$transaction(async (tx) => {
+      const { name, type, areaId, isPublic, password, nickname, fileUUID } = createGroupDto;
 
-    const hashedPassword = await this.hash(password);
+      const hashedPassword = await this.hash(password);
 
-    try {
-      const group = await this.prismaService.group.create({
-        data: {
-          name,
-          type,
-          areaId,
-          isPublic,
-          password: hashedPassword,
-        },
-        include: {
-          area: {
-            include: {
-              sigg: {
-                include: {
-                  sido: true,
+      try {
+        const group = await tx.group.create({
+          data: {
+            name,
+            type,
+            areaId,
+            isPublic,
+            password: hashedPassword,
+          },
+          include: {
+            area: {
+              include: {
+                sigg: {
+                  include: {
+                    sido: true,
+                  },
                 },
               },
             },
           },
-        },
-      });
+        });
 
-      if (fileUUID) {
-        const file = await this.prismaService.file.update({
-          where: {
-            uuid: fileUUID,
-          },
+        if (fileUUID) {
+          const file = await tx.file.update({
+            where: {
+              uuid: fileUUID,
+            },
+            data: {
+              groupId: group.id,
+            },
+          });
+          if (!file) throw new NotFoundException("존재하지 않는 파일입니다");
+
+          await tx.file.updateMany({
+            where: {
+              groupId: group.id,
+            },
+            data: {
+              deletedAt: new Date(Date.now()),
+            },
+          });
+        }
+
+        await tx.registration.create({
           data: {
+            userId: user.id,
             groupId: group.id,
+            nickname,
+            authority: 1,
+            isActivated: true,
           },
         });
-        if (!file) throw new NotFoundException("존재하지 않는 파일입니다");
 
-        await this.prismaService.file.updateMany({
-          where: {
-            groupId: group.id,
-          },
-          data: {
-            deletedAt: new Date(Date.now()),
-          },
-        });
+        return group;
+      } catch (e) {
+        throw new InternalServerErrorException(e);
       }
-
-      const registration = await this.prismaService.registration.create({
-        data: {
-          userId: user.id,
-          groupId: group.id,
-          nickname,
-          authority: 1,
-          isActivated: true,
-        },
-      });
-
-      return group;
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+    });
   }
 
   async patchGroup(groupId: bigint, patchGroupDto: PatchGroupDto, user: User) {
-    const { name, type, areaId, isPublic, password, fileUUID } = patchGroupDto;
+    return await this.prismaService.$transaction(async (tx) => {
+      const { name, type, areaId, isPublic, password, fileUUID } = patchGroupDto;
 
-    const group = await this.prismaService.group.findUnique({
-      where: {
-        id: groupId,
-        deletedAt: null,
-      },
-    });
-    if (!group) throw new NotFoundException("그룹이 존재하지 않습니다");
-
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        user: {
-          id: user.id,
-          deletedAt: null,
-        },
-        authority: 1,
-      },
-    });
-    if (!registration) throw new ForbiddenException("그룹 소유자만 그룹 정보 수정이 가능합니다");
-
-    try {
-      if (fileUUID) {
-        const file = await this.prismaService.file.update({
-          where: {
-            uuid: fileUUID,
-          },
-          data: {
-            groupId: group.id,
-          },
-        });
-        if (!file) throw new NotFoundException("존재하지 않는 파일입니다");
-
-        await this.prismaService.file.updateMany({
-          where: {
-            groupId: group.id,
-          },
-          data: {
-            deletedAt: new Date(Date.now()),
-          },
-        });
-      }
-
-      return await this.prismaService.group.update({
+      const group = await tx.group.findUnique({
         where: {
           id: groupId,
           deletedAt: null,
         },
-        data: {
-          ...(name && { name }),
-          ...(type && { type }),
-          ...(areaId && { areaId }),
-          ...(isPublic && { isPublic }),
-          ...(password && { password }),
+      });
+      if (!group) throw new NotFoundException("그룹이 존재하지 않습니다");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          user: {
+            id: user.id,
+            deletedAt: null,
+          },
+          authority: 1,
+        },
+      });
+      if (!registration) throw new ForbiddenException("그룹 소유자만 그룹 정보 수정이 가능합니다");
+
+      try {
+        if (fileUUID) {
+          const file = await tx.file.update({
+            where: {
+              uuid: fileUUID,
+            },
+            data: {
+              groupId: group.id,
+            },
+          });
+          if (!file) throw new NotFoundException("존재하지 않는 파일입니다");
+
+          await tx.file.updateMany({
+            where: {
+              groupId: group.id,
+            },
+            data: {
+              deletedAt: new Date(Date.now()),
+            },
+          });
+        }
+
+        return await tx.group.update({
+          where: {
+            id: groupId,
+            deletedAt: null,
+          },
+          data: {
+            ...(name && { name }),
+            ...(type && { type }),
+            ...(areaId && { areaId }),
+            ...(isPublic && { isPublic }),
+            ...(password && { password }),
+          },
+          include: {
+            area: {
+              include: {
+                sigg: {
+                  include: {
+                    sido: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
+  }
+
+  async getGroup(groupId: bigint) {
+    return await this.prismaService.$transaction(async (tx) => {
+      const group = await tx.group.findUnique({
+        where: {
+          id: groupId,
+          deletedAt: null,
         },
         include: {
           area: {
@@ -162,33 +190,11 @@ export class GroupsService {
           },
         },
       });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
-  }
 
-  async getGroup(groupId: bigint) {
-    const group = await this.prismaService.group.findUnique({
-      where: {
-        id: groupId,
-        deletedAt: null,
-      },
-      include: {
-        area: {
-          include: {
-            sigg: {
-              include: {
-                sido: true,
-              },
-            },
-          },
-        },
-      },
+      if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
+
+      return group;
     });
-
-    if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
-
-    return group;
   }
 
   async createRegistration(
@@ -196,59 +202,61 @@ export class GroupsService {
     createRegistrationDto: CreateRegistrationDto,
     user: User
   ) {
-    const { password } = createRegistrationDto;
+    return await this.prismaService.$transaction(async (tx) => {
+      const { password } = createRegistrationDto;
 
-    const group = await this.prismaService.group.findUnique({
-      where: {
-        id: groupId,
-        deletedAt: null,
-      },
-    });
+      const group = await tx.group.findUnique({
+        where: {
+          id: groupId,
+          deletedAt: null,
+        },
+      });
 
-    if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
-    if (!(await compare(password, group.password)))
-      throw new UnauthorizedException("그룹 가입 비밀번호가 일치하지 않습니다");
+      if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
+      if (!(await compare(password, group.password)))
+        throw new UnauthorizedException("그룹 가입 비밀번호가 일치하지 않습니다");
 
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId,
-        deletedAt: null,
-      },
-    });
-
-    if (registration) throw new BadRequestException("이미 가입한 그룹입니다");
-
-    try {
-      return await this.prismaService.registration.create({
-        data: {
+      const registration = await tx.registration.findFirst({
+        where: {
           userId: user.id,
           groupId,
-          nickname: null,
-          authority: 3,
-          isActivated: false,
+          deletedAt: null,
         },
-        include: {
-          //user: true,
-          group: {
-            include: {
-              area: {
-                include: {
-                  sigg: {
-                    include: {
-                      sido: true,
+      });
+
+      if (registration) throw new BadRequestException("이미 가입한 그룹입니다");
+
+      try {
+        return await tx.registration.create({
+          data: {
+            userId: user.id,
+            groupId,
+            nickname: null,
+            authority: 3,
+            isActivated: false,
+          },
+          include: {
+            //user: true,
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
-        },
-      });
-    } catch (e) {
-      console.log(e);
-      throw new InternalServerErrorException(e);
-    }
+        });
+      } catch (e) {
+        console.log(e);
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async patchMyRegistration(
@@ -256,99 +264,103 @@ export class GroupsService {
     patchMyRegistrationDto: PatchMyRegistrationDto,
     user: User
   ) {
-    const { nickname } = patchMyRegistrationDto;
+    return await this.prismaService.$transaction(async (tx) => {
+      const { nickname } = patchMyRegistrationDto;
 
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId,
-        deletedAt: null,
-      },
-    });
-
-    if (!registration) throw new NotFoundException("가입 정보가 존재하지 않습니다");
-
-    try {
-      return await this.prismaService.registration.update({
+      const registration = await tx.registration.findFirst({
         where: {
-          id: registration.id,
-          deletedAt: null,
-        },
-        data: {
-          nickname,
-          isActivated: true,
-        },
-        include: {
-          //user: true,
-          group: {
-            include: {
-              area: {
-                include: {
-                  sigg: {
-                    include: {
-                      sido: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-    } catch (e) {
-      console.log(e);
-      throw new InternalServerErrorException(e);
-    }
-  }
-
-  async getRegistrations(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
-    const group = await this.prismaService.group.findUnique({
-      where: {
-        id: groupId,
-        deletedAt: null,
-      },
-    });
-    if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
-
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId,
-        deletedAt: null,
-      },
-    });
-
-    if (!registration) throw new ForbiddenException("그룹 멤버가 아닙니다");
-
-    try {
-      return await this.prismaService.registration.findMany({
-        where: {
+          userId: user.id,
           groupId,
           deletedAt: null,
         },
-        take: pageSize ? pageSize : 10,
-        skip: lastId ? 1 : 0,
-        ...(lastId && { cursor: { id: lastId } }),
-        include: {
-          //user: true,
-          group: {
-            include: {
-              area: {
-                include: {
-                  sigg: {
-                    include: {
-                      sido: true,
+      });
+
+      if (!registration) throw new NotFoundException("가입 정보가 존재하지 않습니다");
+
+      try {
+        return await tx.registration.update({
+          where: {
+            id: registration.id,
+            deletedAt: null,
+          },
+          data: {
+            nickname,
+            isActivated: true,
+          },
+          include: {
+            //user: true,
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
+        });
+      } catch (e) {
+        console.log(e);
+        throw new InternalServerErrorException(e);
+      }
+    });
+  }
+
+  async getRegistrations(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
+    return await this.prismaService.$transaction(async (tx) => {
+      const group = await tx.group.findUnique({
+        where: {
+          id: groupId,
+          deletedAt: null,
         },
       });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+      if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          userId: user.id,
+          groupId,
+          deletedAt: null,
+        },
+      });
+
+      if (!registration) throw new ForbiddenException("그룹 멤버가 아닙니다");
+
+      try {
+        return await tx.registration.findMany({
+          where: {
+            groupId,
+            deletedAt: null,
+          },
+          take: pageSize ? pageSize : 10,
+          skip: lastId ? 1 : 0,
+          ...(lastId && { cursor: { id: lastId } }),
+          include: {
+            //user: true,
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async patchRegistration(
@@ -357,311 +369,295 @@ export class GroupsService {
     patchRegistrationDto: PatchRegistrationDto,
     user: User
   ) {
-    const { authority } = patchRegistrationDto;
+    return await this.prismaService.$transaction(async (tx) => {
+      const { authority } = patchRegistrationDto;
 
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId,
-        authority: 1,
-        deletedAt: null,
-      },
-    });
-    if (!registration) throw new ForbiddenException("그룹 소유자만 수정이 가능합니다");
-
-    const registrationToPatch = await this.prismaService.registration.findFirst({
-      where: {
-        userId,
-        groupId,
-        deletedAt: null,
-      },
-    });
-    if (!registrationToPatch) throw new NotFoundException("가입 정보가 존재하지 않습니다");
-    if (registrationToPatch.authority == 1)
-      throw new ForbiddenException("그룹 소유자의 직책은 변경할 수 없습니다");
-
-    try {
-      return await this.prismaService.registration.update({
+      const registration = await tx.registration.findFirst({
         where: {
-          id: registrationToPatch.id,
+          userId: user.id,
+          groupId,
+          authority: 1,
           deletedAt: null,
         },
-        data: {
-          authority,
+      });
+      if (!registration) throw new ForbiddenException("그룹 소유자만 수정이 가능합니다");
+
+      const registrationToPatch = await tx.registration.findFirst({
+        where: {
+          userId,
+          groupId,
+          deletedAt: null,
         },
-        include: {
-          //user: true,
-          group: {
-            include: {
-              area: {
-                include: {
-                  sigg: {
-                    include: {
-                      sido: true,
+      });
+      if (!registrationToPatch) throw new NotFoundException("가입 정보가 존재하지 않습니다");
+      if (registrationToPatch.authority == 1)
+        throw new ForbiddenException("그룹 소유자의 직책은 변경할 수 없습니다");
+
+      try {
+        return await tx.registration.update({
+          where: {
+            id: registrationToPatch.id,
+            deletedAt: null,
+          },
+          data: {
+            authority,
+          },
+          include: {
+            //user: true,
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
-        },
-      });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async deleteRegistration(groupId: bigint, userId: bigint, user: User) {
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId,
-        authority: 1,
-        deletedAt: null,
-      },
-    });
-    if (!registration && userId != user.id)
-      throw new ForbiddenException("그룹 소유자나 본인만 탈퇴 처리가 가능합니다");
-    if (registration && userId == user.id)
-      throw new ForbiddenException("그룹 소유자의 탈퇴 처리는 불가능합니다");
-
-    const registrationToDelete = await this.prismaService.registration.findFirst({
-      where: {
-        userId,
-        groupId,
-        deletedAt: null,
-      },
-    });
-    if (!registrationToDelete) throw new NotFoundException("가입 정보가 존재하지 않습니다");
-    try {
-      return await this.prismaService.registration.update({
+    return await this.prismaService.$transaction(async (tx) => {
+      const registration = await tx.registration.findFirst({
         where: {
-          id: registrationToDelete.id,
+          userId: user.id,
+          groupId,
+          authority: 1,
           deletedAt: null,
         },
-        data: {
-          deletedAt: new Date(Date.now()),
+      });
+      if (!registration && userId != user.id)
+        throw new ForbiddenException("그룹 소유자나 본인만 탈퇴 처리가 가능합니다");
+      if (registration && userId == user.id)
+        throw new ForbiddenException("그룹 소유자의 탈퇴 처리는 불가능합니다");
+
+      const registrationToDelete = await tx.registration.findFirst({
+        where: {
+          userId,
+          groupId,
+          deletedAt: null,
         },
-        include: {
-          //user: true,
-          group: {
-            include: {
-              area: {
-                include: {
-                  sigg: {
-                    include: {
-                      sido: true,
+      });
+      if (!registrationToDelete) throw new NotFoundException("가입 정보가 존재하지 않습니다");
+      try {
+        return await tx.registration.update({
+          where: {
+            id: registrationToDelete.id,
+            deletedAt: null,
+          },
+          data: {
+            deletedAt: new Date(Date.now()),
+          },
+          include: {
+            //user: true,
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
-        },
-      });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async transferFounder(groupId: bigint, transferFounderDto: TransferFounderDto, user: User) {
-    const { userId } = transferFounderDto;
+    return await this.prismaService.$transaction(async (tx) => {
+      const { userId } = transferFounderDto;
 
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId,
-        authority: 1,
-        deletedAt: null,
-      },
-    });
-    if (!registration) throw new ForbiddenException("그룹 소유자만 소유자 권한 승계가 가능합니다");
-
-    const registrationToPatch = await this.prismaService.registration.findFirst({
-      where: {
-        userId,
-      },
-    });
-    if (!registrationToPatch)
-      throw new NotFoundException("승계하고자 하는 유저가 그룹에 존재하지 않습니다");
-
-    try {
-      await this.prismaService.registration.update({
+      const registration = await tx.registration.findFirst({
         where: {
-          id: registration.id,
+          userId: user.id,
+          groupId,
+          authority: 1,
           deletedAt: null,
-        },
-        data: {
-          authority: 3,
         },
       });
+      if (!registration)
+        throw new ForbiddenException("그룹 소유자만 소유자 권한 승계가 가능합니다");
 
-      return await this.prismaService.registration.update({
+      const registrationToPatch = await tx.registration.findFirst({
         where: {
-          id: registrationToPatch.id,
-          deletedAt: null,
+          userId,
         },
-        data: {
-          authority: 1,
-        },
-        include: {
-          //user: true,
-          group: {
-            include: {
-              area: {
-                include: {
-                  sigg: {
-                    include: {
-                      sido: true,
+      });
+      if (!registrationToPatch)
+        throw new NotFoundException("승계하고자 하는 유저가 그룹에 존재하지 않습니다");
+
+      try {
+        await tx.registration.update({
+          where: {
+            id: registration.id,
+            deletedAt: null,
+          },
+          data: {
+            authority: 3,
+          },
+        });
+
+        return await tx.registration.update({
+          where: {
+            id: registrationToPatch.id,
+            deletedAt: null,
+          },
+          data: {
+            authority: 1,
+          },
+          include: {
+            //user: true,
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
-        },
-      });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async createInvitation(groupId: bigint, createInvitationDto: CreateInvitationDto, user: User) {
-    const { expireAt, limitNumber } = createInvitationDto;
+    return await this.prismaService.$transaction(async (tx) => {
+      const { expireAt, limitNumber } = createInvitationDto;
 
-    const group = await this.prismaService.group.findUnique({
-      where: {
-        id: groupId,
-        deletedAt: null,
-      },
-    });
-    if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
-
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId,
-        authority: 1,
-        deletedAt: null,
-      },
-    });
-    if (!registration) throw new ForbiddenException("그룹 소유자만 생성이 가능합니다");
-
-    if (!expireAt && !limitNumber)
-      throw new BadRequestException("유효기간이나 유효횟수를 설정해주세요!");
-
-    try {
-      return await this.prismaService.invitation.create({
-        data: {
-          link: randomBytes(20).toString("hex"),
-          expireAt,
-          limitNumber,
-          useNumber: 0,
-          groupId,
+      const group = await tx.group.findUnique({
+        where: {
+          id: groupId,
+          deletedAt: null,
         },
-        include: {
-          group: {
-            include: {
-              area: {
-                include: {
-                  sigg: {
-                    include: {
-                      sido: true,
+      });
+      if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          userId: user.id,
+          groupId,
+          authority: 1,
+          deletedAt: null,
+        },
+      });
+      if (!registration) throw new ForbiddenException("그룹 소유자만 생성이 가능합니다");
+
+      if (!expireAt && !limitNumber)
+        throw new BadRequestException("유효기간이나 유효횟수를 설정해주세요!");
+
+      try {
+        return await tx.invitation.create({
+          data: {
+            link: randomBytes(20).toString("hex"),
+            expireAt,
+            limitNumber,
+            useNumber: 0,
+            groupId,
+          },
+          include: {
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
-        },
-      });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async getInvitation(groupId: bigint, lastId: bigint, pageSize: number, user: User) {
-    const group = await this.prismaService.group.findUnique({
-      where: {
-        id: groupId,
-        deletedAt: null,
-      },
-    });
-    if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
-
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId,
-        deletedAt: null,
-      },
-    });
-    if (!registration) throw new ForbiddenException("그룹 멤버만 조회가 가능합니다");
-
-    try {
-      return await this.prismaService.invitation.findMany({
+    return await this.prismaService.$transaction(async (tx) => {
+      const group = await tx.group.findUnique({
         where: {
+          id: groupId,
+          deletedAt: null,
+        },
+      });
+      if (!group) throw new NotFoundException("존재하지 않는 그룹입니다");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          userId: user.id,
           groupId,
           deletedAt: null,
         },
-        take: pageSize ? pageSize : 10,
-        skip: lastId ? 1 : 0,
-        ...(lastId && { cursor: { id: lastId } }),
-        include: {
-          group: {
-            include: {
-              area: {
-                include: {
-                  sigg: {
-                    include: {
-                      sido: true,
+      });
+      if (!registration) throw new ForbiddenException("그룹 멤버만 조회가 가능합니다");
+
+      try {
+        return await tx.invitation.findMany({
+          where: {
+            groupId,
+            deletedAt: null,
+          },
+          take: pageSize ? pageSize : 10,
+          skip: lastId ? 1 : 0,
+          ...(lastId && { cursor: { id: lastId } }),
+          include: {
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
                     },
                   },
                 },
               },
             },
           },
-        },
-      });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async patchInvitation(invitationId: bigint, patchInvitationDto: PatchInvitationDto, user: User) {
-    const { expireAt, limitNumber } = patchInvitationDto;
+    return await this.prismaService.$transaction(async (tx) => {
+      const { expireAt, limitNumber } = patchInvitationDto;
 
-    const invitation = await this.prismaService.invitation.findUnique({
-      where: {
-        id: invitationId,
-        deletedAt: null,
-      },
-      include: {
-        group: true,
-      },
-    });
-    if (!invitation) throw new NotFoundException("존재하지 않는 초대입니다");
-
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId: invitation.group.id,
-        authority: 1,
-        deletedAt: null,
-      },
-    });
-    if (!registration) throw new ForbiddenException("그룹 소유자만 수정이 가능합니다");
-    if (!expireAt && !limitNumber)
-      throw new BadRequestException("유효기간이나 유효횟수를 설정해주세요!");
-
-    try {
-      return await this.prismaService.invitation.update({
-        data: {
-          ...(expireAt && { expireAt }),
-          ...(limitNumber && { limitNumber }),
-        },
+      const invitation = await tx.invitation.findUnique({
         where: {
-          id: invitation.id,
+          id: invitationId,
           deletedAt: null,
         },
         include: {
@@ -680,40 +676,57 @@ export class GroupsService {
           },
         },
       });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+      if (!invitation) throw new NotFoundException("존재하지 않는 초대입니다");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          userId: user.id,
+          groupId: invitation.group.id,
+          authority: 1,
+          deletedAt: null,
+        },
+      });
+      if (!registration) throw new ForbiddenException("그룹 소유자만 수정이 가능합니다");
+      if (!expireAt && !limitNumber)
+        throw new BadRequestException("유효기간이나 유효횟수를 설정해주세요!");
+
+      try {
+        return await tx.invitation.update({
+          data: {
+            ...(expireAt && { expireAt }),
+            ...(limitNumber && { limitNumber }),
+          },
+          where: {
+            id: invitation.id,
+            deletedAt: null,
+          },
+          include: {
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async deleteInvitation(invitationId: bigint, user: User) {
-    const invitation = await this.prismaService.invitation.findUnique({
-      where: {
-        id: invitationId,
-        deletedAt: null,
-      },
-      include: {
-        group: true,
-      },
-    });
-    if (!invitation) throw new NotFoundException("존재하지 않는 초대입니다");
-
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId: invitation.group.id,
-        authority: 1,
-        deletedAt: null,
-      },
-    });
-    if (!registration) throw new ForbiddenException("그룹 소유자만 삭제가 가능합니다");
-
-    try {
-      return await this.prismaService.invitation.update({
-        data: {
-          deletedAt: new Date(Date.now()),
-        },
+    return await this.prismaService.$transaction(async (tx) => {
+      const invitation = await tx.invitation.findUnique({
         where: {
-          id: invitation.id,
+          id: invitationId,
           deletedAt: null,
         },
         include: {
@@ -732,41 +745,54 @@ export class GroupsService {
           },
         },
       });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+      if (!invitation) throw new NotFoundException("존재하지 않는 초대입니다");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          userId: user.id,
+          groupId: invitation.group.id,
+          authority: 1,
+          deletedAt: null,
+        },
+      });
+      if (!registration) throw new ForbiddenException("그룹 소유자만 삭제가 가능합니다");
+
+      try {
+        return await tx.invitation.update({
+          data: {
+            deletedAt: new Date(Date.now()),
+          },
+          where: {
+            id: invitation.id,
+            deletedAt: null,
+          },
+          include: {
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 
   async useInvitation(link: string, user: User) {
-    const invitation = await this.prismaService.invitation.findFirst({
-      where: {
-        link,
-        deletedAt: null,
-      },
-      include: {
-        group: true,
-      },
-    });
-    if (!invitation) throw new NotFoundException("존재하지 않는 초대입니다");
-    if (invitation.limitNumber <= invitation.useNumber)
-      throw new NotFoundException("존재하지 않는 초대입니다");
-
-    const registration = await this.prismaService.registration.findFirst({
-      where: {
-        userId: user.id,
-        groupId: invitation.group.id,
-        deletedAt: null,
-      },
-    });
-    if (registration) throw new ForbiddenException("이미 가입한 그룹입니다");
-
-    try {
-      return await this.prismaService.invitation.update({
-        data: {
-          useNumber: invitation.useNumber + 1,
-        },
+    return await this.prismaService.$transaction(async (tx) => {
+      const invitation = await tx.invitation.findFirst({
         where: {
-          id: invitation.id,
+          link,
           deletedAt: null,
         },
         include: {
@@ -785,8 +811,47 @@ export class GroupsService {
           },
         },
       });
-    } catch (e) {
-      throw new InternalServerErrorException(e);
-    }
+      if (!invitation) throw new NotFoundException("존재하지 않는 초대입니다");
+      if (invitation.limitNumber <= invitation.useNumber)
+        throw new NotFoundException("존재하지 않는 초대입니다");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          userId: user.id,
+          groupId: invitation.group.id,
+          deletedAt: null,
+        },
+      });
+      if (registration) throw new ForbiddenException("이미 가입한 그룹입니다");
+
+      try {
+        return await tx.invitation.update({
+          data: {
+            useNumber: invitation.useNumber + 1,
+          },
+          where: {
+            id: invitation.id,
+            deletedAt: null,
+          },
+          include: {
+            group: {
+              include: {
+                area: {
+                  include: {
+                    sigg: {
+                      include: {
+                        sido: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      } catch (e) {
+        throw new InternalServerErrorException(e);
+      }
+    });
   }
 }

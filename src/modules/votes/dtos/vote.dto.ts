@@ -28,7 +28,8 @@ export class VoteDto {
     this.createdAt = vote.createdAt;
     this.updatedAt = vote.updatedAt;
     this.deletedAt = vote.deletedAt;
-    this.voteItems = vote.voteItems.map((voteItem) => new VoteItemDto(voteItem));
+    if (vote.voteItems)
+      this.voteItems = vote.voteItems.map((voteItem) => new VoteItemDto(voteItem));
     //this.user = new UserDto(vote.user);
     this.group = new GroupDto(vote.group);
   }
