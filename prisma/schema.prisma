@@ -105,6 +105,7 @@ model Restaurant {
   recommendedMenu String?
   orderTip        String?
   isActivated     Boolean
+  isPublic        Boolean
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @default(now()) @updatedAt
   deletedAt       DateTime?
