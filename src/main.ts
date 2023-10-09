@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { winstonLogger } from "./config/logger/winston/logger";
+import { ValidationPipe } from "@nestjs/common";
 import { PrismaService } from "./config/database/prisma.service";
 import * as cookieParser from "cookie-parser";
 
@@ -12,6 +13,12 @@ async function bootstrap() {
   });
 
   const appConfig = app.get(ConfigService);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+    })
+  );
 
   // Swagger Setting
   const config = new DocumentBuilder()
