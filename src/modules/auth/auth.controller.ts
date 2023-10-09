@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, Res } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { Response } from "express";
 import { ApiOperation, ApiResponse } from "@nestjs/swagger";
@@ -26,6 +26,7 @@ export class AuthController {
   @ApiOperation({ summary: "카카오 로그인 callback" })
   async kakaoLogin(@Query("code") query: string, @Res() res: Response) {
     const token = await this.authService.getKakaoIdToken(query);
+    console.log(token);
     const user = await this.authService.isUserExist(token);
     const FE_BASEURL = this.configService.get("fe.baseUrl");
     res.set("Location", user ? FE_BASEURL : `${FE_BASEURL}/register`);
