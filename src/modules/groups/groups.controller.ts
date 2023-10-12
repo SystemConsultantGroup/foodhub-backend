@@ -6,12 +6,12 @@ export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
   @Post(":groupId/restaurants")
-  createRestaurant() {
+  async createRestaurant() {
     return "Create Reestaurant";
   }
 
   @Get(":groupId/restaurants")
-  readAllRestaurantsOfGroup() {
+  async readAllRestaurantsOfGroup() {
     return "Read All Restaurants of Group";
   }
 }

@@ -13,14 +13,13 @@ datasource db {
 
 model User {
   id             BigInt          @id @default(autoincrement())
-  email          String          @unique
+  email          String?          @unique
   password       String?
   provider       Provider        @default(KAKAO)
   oauthId        String?         @unique
   nickname       String
   defaultPhotoId Int             @db.TinyInt // 1~6
-  userPhotoUuid  String?
-  birthYear      DateTime?
+  birthYear      Int?
   gender         Int?            @db.TinyInt
   isActivated    Boolean
   createdAt      DateTime        @default(now())
@@ -88,7 +87,7 @@ model Registration {
 }
 
 model Category {
-  id          BigInt       @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   name        String
   Restaurants Restaurant[]
 }
@@ -115,14 +114,14 @@ model Restaurant {
   VoteItems       VoteItem[]
   userId          BigInt
   groupId         BigInt
-  categoryId      BigInt
+  categoryId      Int
   user            User             @relation(fields: [userId], references: [id])
   group           Group            @relation(fields: [groupId], references: [id])
   category        Category         @relation(fields: [categoryId], references: [id])
 }
 
 model Tag {
-  id              BigInt           @id @default(autoincrement())
+  id              Int           @id @default(autoincrement())
   name            String
   RestaurantTagAs RestaurantTagA[]
 }
@@ -133,7 +132,7 @@ model RestaurantTagA {
   updatedAt    DateTime   @default(now()) @updatedAt
   deletedAt    DateTime?
   restaurantId String
-  tagId        BigInt
+  tagId        Int
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   tag          Tag        @relation(fields: [tagId], references: [id])
 }
