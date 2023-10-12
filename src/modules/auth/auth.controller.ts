@@ -1,10 +1,8 @@
-import { Controller, Get, Query, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, Res } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { Response } from "express";
 import { ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
-import { Oauth2Guard } from "./guards/oauth2.guard";
-import { CurrentUser } from "src/common/decorators/current-user.decorator";
 
 @Controller("auth")
 export class AuthController {
@@ -12,14 +10,6 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService
   ) {}
-
-  // Test API Code
-  @Get("signup")
-  @UseGuards(Oauth2Guard({ strict: false, isSignUp: true }))
-  async test(@CurrentUser() user) {
-    console.log(user);
-    return "this is sign up";
-  }
 
   @Get("kakao/login")
   @ApiOperation({ summary: "카카오 로그인 접근 API " })

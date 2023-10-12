@@ -17,6 +17,6 @@ export class AppController {
   @UseGuards(Oauth2Guard({ strict: false, isSignUp: false }))
   async test(@CurrentUser() user) {
     console.log(user);
-    return "this is test";
+    return "test success";
   }
 }

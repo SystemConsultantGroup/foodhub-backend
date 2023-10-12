@@ -1,4 +1,14 @@
-import { Controller, Delete, Get, Param, Patch, Query, Res, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Query,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import { RestaurantsService } from "./restaurants.service";
 import { PageResponseDto } from "src/common/dtos/page-response.dto";
 import { Oauth2Guard } from "../auth/guards/oauth2.guard";
@@ -46,8 +56,18 @@ export class RestaurantsController {
 
   @Get(":restaurantId")
   @UseGuards(Oauth2Guard({ strict: false, isSignUp: false }))
-  async getRestaurant(@Param() restaurantId: number, @CurrentUser() user: User | undefined) {
-    return "Read Single Restuarant";
+  @ApiOperation({
+    summary: "맛집 상세 정보 조회 API",
+    description: "Restaurant ID에 해당하는 맛집의 상세 정보를 조회한다.",
+  })
+  @ApiOkResponse({ type: RestaurantDto, description: "맛집 상세 정보 조회 성공" })
+  @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
+  async getRestaurant(
+    @Param("restaurantId", new ParseUUIDPipe()) restaurantId: string,
+    @CurrentUser() user: User | undefined
+  ) {
+    const restaurantInfo = await this.restaurantsService.getRestaurant(restaurantId, user);
+    return new RestaurantDto(restaurantInfo);
   }
 
   @Patch(":restaurantId")

@@ -28,9 +28,6 @@ export class Oauth2Strategy extends PassportStrategy(Strategy, "oauth2") {
 
     const oauthId = await this.verifyToken(token);
 
-    // TODO PR 전 삭제
-    console.log(`oauthID : ${oauthId}`);
-
     if (typeof oauthId === "string") {
       const user = await this.prismaService.user.findUnique({
         where: {
