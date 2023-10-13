@@ -10,13 +10,11 @@ export class RestaurantDto {
     }
   ) {
     this.id = restaurant.id;
-    // this.category = new CategoryDto(restaurant.category);
     this.category = restaurant.category;
     this.files = restaurant.Files;
-    // this.tags = restaurant.RestaurantTagAs.map((restaurantTagA) => new TagDto(restaurantTagA.tag));
     this.tags = restaurant.RestaurantTagAs.map((restaurantTagA) => restaurantTagA.tag);
-    this.userId = Number(restaurant.userId);
-    this.groupId = Number(restaurant.groupId);
+    this.userId = restaurant.userId.toString();
+    this.groupId = restaurant.groupId.toString();
     this.name = restaurant.name;
     this.address = restaurant.address;
     this.link = restaurant.link;
@@ -36,17 +34,15 @@ export class RestaurantDto {
   @ApiProperty()
   id: string;
   @ApiProperty()
-  // category: CategoryDto;
   category: Category;
   @ApiProperty()
   files?: Partial<File>[];
   @ApiProperty()
-  // tags: TagDto[];
   tags: Tag[];
   @ApiProperty()
-  userId: number;
+  userId: string;
   @ApiProperty()
-  groupId: number;
+  groupId: string;
   @ApiProperty()
   name: string;
   @ApiProperty({ required: false })

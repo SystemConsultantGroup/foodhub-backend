@@ -5,8 +5,8 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Post,
   Query,
-  Res,
   UseGuards,
 } from "@nestjs/common";
 import { RestaurantsService } from "./restaurants.service";
@@ -22,6 +22,8 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
+import { PageQueryDto } from "src/common/dtos/page-query.dto";
+import { ParseBigIntPipe } from "src/common/pipes/pipes";
 
 @ApiTags("맛집 API")
 @Controller("restaurants")
@@ -36,7 +38,6 @@ export class RestaurantsController {
     description: "공개 맛집과 소속된 단체의 맛집을 조회할 수 있다.",
   })
   @ApiOkResponse({ type: PageResponseDto, description: "전체 맛집 조회 성공" })
-  @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
   async getRestaurants(
     @Query() getRestaurantsQueryDto: GetRestaurantsQueryDto,
     @CurrentUser() user: User | undefined
@@ -61,9 +62,8 @@ export class RestaurantsController {
     description: "Restaurant ID에 해당하는 맛집의 상세 정보를 조회한다.",
   })
   @ApiOkResponse({ type: RestaurantDto, description: "맛집 상세 정보 조회 성공" })
-  @ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
   async getRestaurant(
-    @Param("restaurantId", new ParseUUIDPipe()) restaurantId: string,
+    @Param("restaurantId", ParseUUIDPipe) restaurantId: string,
     @CurrentUser() user: User | undefined
   ) {
     const restaurantInfo = await this.restaurantsService.getRestaurant(restaurantId, user);
@@ -78,5 +78,43 @@ export class RestaurantsController {
   @Delete(":restaurantId")
   async deleteRestaurant() {
     return "Delete Restaurant";
+  }
+}
+
+@ApiTags("맛집 API")
+@Controller("groups")
+@ApiInternalServerErrorResponse({ description: "서버 내부 오류" })
+export class RestaurantControllerGroups {
+  constructor(private readonly restaurantsService: RestaurantsService) {}
+
+  @Get(":groupId/restaurants")
+  @UseGuards(Oauth2Guard({ strict: false, isSignUp: false }))
+  @ApiOperation({
+    summary: "그룹의 맛집 조회 API",
+    description: "Group ID에 해당하는 그룹의 맛집 중 조회 권한이 있는 모든 맛집을 조회한다.",
+  })
+  @ApiOkResponse({ type: PageResponseDto, description: "그룹 맛집 조회 성공" })
+  async getRestaurantsOfGroups(
+    @Param("groupId", ParseBigIntPipe) groupId: bigint,
+    @Query() pageQueryDto: PageQueryDto,
+    @CurrentUser() user: User | undefined
+  ) {
+    const { totalCount, restaurants } = await this.restaurantsService.getRestaurantsOfGroups(
+      groupId,
+      pageQueryDto,
+      user
+    );
+    const contents = restaurants.map((restaurant) => new RestaurantDto(restaurant));
+    return new PageResponseDto(
+      pageQueryDto.pageNumber,
+      pageQueryDto.pageSize,
+      totalCount,
+      contents
+    );
+  }
+
+  @Post(":groupId/restaurants")
+  async createRestaurant() {
+    return "Create Reestaurant";
   }
 }

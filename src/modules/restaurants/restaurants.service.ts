@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "src/config/database/prisma.service";
 import { User } from "@prisma/client";
+import { PageQueryDto } from "src/common/dtos/page-query.dto";
 
 @Injectable()
 export class RestaurantsService {
@@ -14,7 +15,7 @@ export class RestaurantsService {
 
   async getRestaurants(getRestaurantsQueryDto: GetRestaurantsQueryDto, user: User | undefined) {
     let restaurants;
-    const { sort, pageNumber } = getRestaurantsQueryDto;
+    const { sort } = getRestaurantsQueryDto;
     const pageOffset = getRestaurantsQueryDto.getOffset();
     const pageSize = getRestaurantsQueryDto.getLimit();
 
@@ -50,7 +51,7 @@ export class RestaurantsService {
         : {}),
     };
 
-    let whereQuery = {};
+    let whereQuery: any = { isPublic: true, deletedAt: null };
     if (user) {
       const userGroups = await this.prismaService.registration.findMany({
         where: {
@@ -65,11 +66,6 @@ export class RestaurantsService {
 
       whereQuery = {
         OR: [{ isPublic: true }, { groupId: { in: groupIds } }],
-        deletedAt: null,
-      };
-    } else {
-      whereQuery = {
-        isPublic: true,
         deletedAt: null,
       };
     }
@@ -110,9 +106,6 @@ export class RestaurantsService {
     if (restaurants.length === 0) throw new NotFoundException("맛집 데이터가 없습니다.");
 
     const totalCount = await this.prismaService.restaurant.count({ where: whereQuery });
-    const totalPages = Math.ceil(totalCount / pageSize);
-    if (totalPages < pageNumber)
-      throw new BadRequestException("범위 밖의 페이지를 요청하였습니다.");
 
     return { totalCount, restaurants };
   }
@@ -164,5 +157,82 @@ export class RestaurantsService {
     const userGroupIds = userGroups.map((registration) => registration.groupId);
     if (userGroupIds.includes(restaurant.groupId)) return restaurant;
     throw new UnauthorizedException("조회 권한이 없습니다.");
+  }
+
+  async getRestaurantsOfGroups(
+    groupId: bigint,
+    pageQueryDto: PageQueryDto,
+    user: User | undefined
+  ) {
+    const pageOffset = pageQueryDto.getOffset();
+    const pageSize = pageQueryDto.getLimit();
+
+    const group = await this.prismaService.group.findFirst({
+      where: {
+        id: groupId,
+        deletedAt: null,
+      },
+    });
+    if (!group) throw new BadRequestException(`존재하지 않는 그룹입니다.`);
+
+    let whereQuery: any = {
+      groupId: groupId,
+      isPublic: true,
+      deletedAt: null,
+    };
+    if (user) {
+      const userGroups = await this.prismaService.registration.findMany({
+        where: {
+          userId: user.id,
+          deletedAt: null,
+        },
+        select: {
+          groupId: true,
+        },
+      });
+      const groupIds = userGroups.map((registration) => registration.groupId);
+      if (groupIds.includes(groupId)) {
+        whereQuery = {
+          groupId: groupId,
+          deletedAt: null,
+        };
+      }
+    }
+
+    const restaurants = await this.prismaService.restaurant.findMany({
+      where: whereQuery,
+      include: {
+        category: true,
+        Files: {
+          where: {
+            deletedAt: null,
+          },
+          select: {
+            uuid: true,
+            name: true,
+            mimeType: true,
+            size: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        RestaurantTagAs: {
+          where: {
+            deletedAt: null,
+          },
+          select: {
+            tag: true,
+          },
+        },
+      },
+      skip: pageOffset,
+      take: pageSize,
+    });
+    if (restaurants.length === 0)
+      throw new NotFoundException(`해당 그룹의 맛집 데이터가 없습니다.`);
+
+    const totalCount = await this.prismaService.restaurant.count({ where: whereQuery });
+
+    return { totalCount, restaurants };
   }
 }
