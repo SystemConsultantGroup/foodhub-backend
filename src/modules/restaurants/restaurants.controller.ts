@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -15,7 +16,7 @@ import { Oauth2Guard } from "../auth/guards/oauth2.guard";
 import { CurrentUser } from "src/common/decorators/current-user.decorator";
 import { User } from "@prisma/client";
 import { GetRestaurantsQueryDto } from "./dtos/get-restaurants-query.dto";
-import { RestaurantDto } from "./dtos/restaurant.dto";
+import { RestaurantResponseDto } from "./dtos/restaurant-response.dto";
 import {
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -24,6 +25,7 @@ import {
 } from "@nestjs/swagger";
 import { PageQueryDto } from "src/common/dtos/page-query.dto";
 import { ParseBigIntPipe } from "src/common/pipes/pipes";
+import { CreateRestaurantDto } from "./dtos/create-restaurant.dto";
 
 @ApiTags("맛집 API")
 @Controller("restaurants")
@@ -46,7 +48,7 @@ export class RestaurantsController {
       getRestaurantsQueryDto,
       user
     );
-    const contents = restaurants.map((restaurant) => new RestaurantDto(restaurant));
+    const contents = restaurants.map((restaurant) => new RestaurantResponseDto(restaurant));
     return new PageResponseDto(
       getRestaurantsQueryDto.pageNumber,
       getRestaurantsQueryDto.pageSize,
@@ -61,13 +63,13 @@ export class RestaurantsController {
     summary: "맛집 상세 정보 조회 API",
     description: "Restaurant ID에 해당하는 맛집의 상세 정보를 조회한다.",
   })
-  @ApiOkResponse({ type: RestaurantDto, description: "맛집 상세 정보 조회 성공" })
+  @ApiOkResponse({ type: RestaurantResponseDto, description: "맛집 상세 정보 조회 성공" })
   async getRestaurant(
     @Param("restaurantId", ParseUUIDPipe) restaurantId: string,
     @CurrentUser() user: User | undefined
   ) {
     const restaurantInfo = await this.restaurantsService.getRestaurant(restaurantId, user);
-    return new RestaurantDto(restaurantInfo);
+    return new RestaurantResponseDto(restaurantInfo);
   }
 
   @Patch(":restaurantId")
@@ -94,17 +96,17 @@ export class RestaurantControllerGroups {
     description: "Group ID에 해당하는 그룹의 맛집 중 조회 권한이 있는 모든 맛집을 조회한다.",
   })
   @ApiOkResponse({ type: PageResponseDto, description: "그룹 맛집 조회 성공" })
-  async getRestaurantsOfGroups(
+  async getRestaurantsOfGroup(
     @Param("groupId", ParseBigIntPipe) groupId: bigint,
     @Query() pageQueryDto: PageQueryDto,
     @CurrentUser() user: User | undefined
   ) {
-    const { totalCount, restaurants } = await this.restaurantsService.getRestaurantsOfGroups(
+    const { totalCount, restaurants } = await this.restaurantsService.getRestaurantsOfGroup(
       groupId,
       pageQueryDto,
       user
     );
-    const contents = restaurants.map((restaurant) => new RestaurantDto(restaurant));
+    const contents = restaurants.map((restaurant) => new RestaurantResponseDto(restaurant));
     return new PageResponseDto(
       pageQueryDto.pageNumber,
       pageQueryDto.pageSize,
@@ -114,7 +116,22 @@ export class RestaurantControllerGroups {
   }
 
   @Post(":groupId/restaurants")
-  async createRestaurant() {
-    return "Create Reestaurant";
+  @UseGuards(Oauth2Guard({ strict: true, isSignUp: false }))
+  @ApiOperation({
+    summary: "맛집 생성 API",
+    description: "그룹의 소유자/관리자가 새로운 맛집을 등록한다.",
+  })
+  @ApiOkResponse({ type: RestaurantResponseDto, description: "맛집 생성 성공" })
+  async createRestaurant(
+    @Param("groupId", ParseBigIntPipe) groupId: bigint,
+    @Body() createRestaurantDto: CreateRestaurantDto,
+    @CurrentUser() user: User
+  ) {
+    const restaurant = await this.restaurantsService.createRestaurant(
+      groupId,
+      createRestaurantDto,
+      user
+    );
+    return new RestaurantResponseDto(restaurant);
   }
 }

@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Category, Restaurant, RestaurantTagA, Tag } from "@prisma/client";
 
-export class RestaurantDto {
+export class RestaurantResponseDto {
   constructor(
     restaurant: Restaurant & {
       category: Category;
