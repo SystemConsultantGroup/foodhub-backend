@@ -10,6 +10,7 @@ import { PrismaService } from "src/config/database/prisma.service";
 import { User } from "@prisma/client";
 import { PageQueryDto } from "src/common/dtos/page-query.dto";
 import { CreateRestaurantDto } from "./dtos/create-restaurant.dto";
+import { PatchRestaurantDto } from "./dtos/patch-restaurant.dto";
 
 @Injectable()
 export class RestaurantsService {
@@ -338,6 +339,156 @@ export class RestaurantsService {
       return tx.restaurant.findUnique({
         where: {
           id: restaurant.id,
+        },
+        include: {
+          category: true,
+          Files: {
+            where: {
+              deletedAt: null,
+            },
+            select: {
+              uuid: true,
+              name: true,
+              mimeType: true,
+              size: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+          RestaurantTagAs: {
+            where: {
+              deletedAt: null,
+            },
+            select: {
+              tag: true,
+            },
+          },
+        },
+      });
+    });
+  }
+
+  async patchRestaurant(restaurantId: string, patchRestaurantDto: PatchRestaurantDto, user: User) {
+    return await this.prismaService.$transaction(async (tx) => {
+      const restaurant = await tx.restaurant.findUnique({
+        where: {
+          id: restaurantId,
+          deletedAt: null,
+        },
+      });
+      if (!restaurant) throw new NotFoundException("해당하는 맛집이 없습니다.");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          userId: user.id,
+          groupId: restaurant.groupId,
+          deletedAt: null,
+        },
+      });
+      if (!registration || registration.authority === 3) {
+        throw new UnauthorizedException("맛집 수정 권한이 없습니다.");
+      }
+      /** 작성자도 글을 수정할 수 있도록 권한을 부여하는 경우
+      if (!registration || (restaurant.userId !== user.id && registration.authority === 3)) {
+        throw new BadRequestException("맛집 수정 권한이 없습니다.");
+      }
+      */
+
+      const {
+        name,
+        isPublic,
+        categoryId,
+        address,
+        link,
+        delivery,
+        comment,
+        capacity,
+        openingHour,
+        recommendedMenu,
+        orderTip,
+        tagIds,
+        files,
+      } = patchRestaurantDto;
+
+      if (tagIds) {
+        const findResponse = await tx.restaurantTagA.findMany({
+          where: {
+            restaurant,
+            deletedAt: null,
+          },
+          select: {
+            tagId: true,
+          },
+        });
+        const oldTagIds = findResponse.map((tagIdObject) => tagIdObject.tagId);
+        const deleteIds = oldTagIds.filter((oldTagId) => !tagIds.includes(oldTagId));
+        const newIds = tagIds.filter((updateTagId) => !oldTagIds.includes(updateTagId));
+
+        await tx.restaurantTagA.updateMany({
+          where: {
+            restaurantId,
+            tagId: {
+              in: deleteIds,
+            },
+          },
+          data: {
+            deletedAt: new Date(Date.now()),
+          },
+        });
+        await tx.restaurantTagA.createMany({
+          data: newIds.map((newId) => ({
+            restaurantId,
+            tagId: newId,
+          })),
+        });
+      }
+
+      const fileUUIDs = files.map((file) => file.uuid);
+      if (files) {
+        await tx.file.updateMany({
+          where: {
+            uuid: {
+              notIn: fileUUIDs,
+            },
+            restaurantId,
+          },
+          data: {
+            deletedAt: new Date(Date.now()),
+          },
+        });
+        const updateResponse = await tx.file.updateMany({
+          where: {
+            uuid: {
+              in: fileUUIDs,
+            },
+          },
+          data: {
+            restaurantId,
+            deletedAt: null,
+          },
+        });
+        console.log(updateResponse.count);
+        if (updateResponse.count !== files.length) {
+          throw new BadRequestException("존재하지 않는 file uuid가 전달되었습니다");
+        }
+      }
+
+      return await tx.restaurant.update({
+        where: {
+          id: restaurantId,
+        },
+        data: {
+          ...(name && { name }),
+          ...(address && { address }),
+          ...(link && { link }),
+          ...(typeof delivery === "boolean" && { delivery }),
+          ...(comment && { comment }),
+          ...(capacity && { capacity }),
+          ...(openingHour && { openingHour }),
+          ...(recommendedMenu && { recommendedMenu }),
+          ...(orderTip && { orderTip }),
+          ...(typeof isPublic === "boolean" && { isPublic }),
+          ...(categoryId && { categoryId }),
         },
         include: {
           category: true,

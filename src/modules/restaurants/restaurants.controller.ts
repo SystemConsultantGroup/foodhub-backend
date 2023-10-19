@@ -26,6 +26,7 @@ import {
 import { PageQueryDto } from "src/common/dtos/page-query.dto";
 import { ParseBigIntPipe } from "src/common/pipes/pipes";
 import { CreateRestaurantDto } from "./dtos/create-restaurant.dto";
+import { PatchRestaurantDto } from "./dtos/patch-restaurant.dto";
 
 @ApiTags("맛집 API")
 @Controller("restaurants")
@@ -73,8 +74,23 @@ export class RestaurantsController {
   }
 
   @Patch(":restaurantId")
-  async patchRestaurant() {
-    return "Modify Restaurant";
+  @UseGuards(Oauth2Guard({ strict: true, isSignUp: false }))
+  @ApiOperation({
+    summary: "맛집 정보 수정 API",
+    description: "Restaurant ID에 해당하는 맛집의 정보를 수정한다.",
+  })
+  @ApiOkResponse({ type: RestaurantResponseDto, description: "맛집 정보 수정 성공" })
+  async patchRestaurant(
+    @Param("restaurantId", ParseUUIDPipe) restaurantId: string,
+    @Body() patchRestaurantDto: PatchRestaurantDto,
+    @CurrentUser() user: User
+  ) {
+    const restaurant = await this.restaurantsService.patchRestaurant(
+      restaurantId,
+      patchRestaurantDto,
+      user
+    );
+    return new RestaurantResponseDto(restaurant);
   }
 
   @Delete(":restaurantId")
