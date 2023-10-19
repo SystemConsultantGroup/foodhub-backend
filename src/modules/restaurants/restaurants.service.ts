@@ -66,10 +66,10 @@ export class RestaurantsService {
           groupId: true,
         },
       });
-      const groupIds = userGroups.map((registration) => registration.groupId);
+      const userGroupIds = userGroups.map((registration) => registration.groupId);
 
       whereQuery = {
-        OR: [{ isPublic: true }, { groupId: { in: groupIds } }],
+        OR: [{ isPublic: true }, { groupId: { in: userGroupIds } }],
         deletedAt: null,
       };
     }
@@ -77,7 +77,9 @@ export class RestaurantsService {
     if (sort === "latest") {
       restaurants = await this.prismaService.restaurant.findMany({
         include: includeQuery,
-        orderBy: { createdAt: "desc" },
+        orderBy: {
+          createdAt: "desc",
+        },
         where: whereQuery,
         skip: pageOffset,
         take: pageSize,
@@ -97,7 +99,6 @@ export class RestaurantsService {
           : 0;
         return avgScoreB - avgScoreA;
       });
-
       restaurants = allRestaurants.slice(pageOffset, pageOffset + pageSize);
     } else if (!sort) {
       restaurants = await this.prismaService.restaurant.findMany({
@@ -110,7 +111,6 @@ export class RestaurantsService {
     if (restaurants.length === 0) throw new NotFoundException("맛집 데이터가 없습니다.");
 
     const totalCount = await this.prismaService.restaurant.count({ where: whereQuery });
-
     return { totalCount, restaurants };
   }
 
@@ -147,7 +147,6 @@ export class RestaurantsService {
     });
     if (!restaurant) throw new NotFoundException("해당하는 맛집이 없습니다.");
     if (restaurant.isPublic) return restaurant;
-
     if (!user) throw new UnauthorizedException("로그인 후 이용해주세요.");
     const registration = await this.prismaService.registration.findFirst({
       where: {
@@ -187,8 +186,8 @@ export class RestaurantsService {
           groupId: true,
         },
       });
-      const groupIds = userGroups.map((registration) => registration.groupId);
-      if (groupIds.includes(groupId)) {
+      const userGroupIds = userGroups.map((registration) => registration.groupId);
+      if (userGroupIds.includes(groupId)) {
         whereQuery = {
           groupId: groupId,
           deletedAt: null,
@@ -226,10 +225,9 @@ export class RestaurantsService {
       take: pageSize,
     });
     if (restaurants.length === 0)
-      throw new NotFoundException(`해당 그룹의 맛집 데이터가 없습니다.`);
+      throw new NotFoundException("해당 그룹의 맛집 데이터가 없습니다.");
 
     const totalCount = await this.prismaService.restaurant.count({ where: whereQuery });
-
     return { totalCount, restaurants };
   }
 
@@ -245,7 +243,7 @@ export class RestaurantsService {
 
       const registration = await tx.registration.findFirst({
         where: {
-          groupId: groupId,
+          groupId,
           userId: user.id,
           deletedAt: null,
         },
@@ -300,7 +298,6 @@ export class RestaurantsService {
           },
         });
       } catch (e) {
-        console.log(e);
         throw new InternalServerErrorException("맛집 생성에 문제가 발생하였습니다.");
       }
 
@@ -332,7 +329,6 @@ export class RestaurantsService {
             throw new BadRequestException("존재하지 않는 file uuid가 전달되었습니다");
           }
         } catch (e) {
-          console.log(e);
           throw new InternalServerErrorException("파일 업데이트에 문제가 발생했습니다.");
         }
       }
@@ -412,64 +408,49 @@ export class RestaurantsService {
       } = patchRestaurantDto;
 
       if (tagIds) {
-        const findResponse = await tx.restaurantTagA.findMany({
-          where: {
-            restaurant,
-            deletedAt: null,
-          },
-          select: {
-            tagId: true,
-          },
-        });
-        const oldTagIds = findResponse.map((tagIdObject) => tagIdObject.tagId);
-        const deleteIds = oldTagIds.filter((oldTagId) => !tagIds.includes(oldTagId));
-        const newIds = tagIds.filter((updateTagId) => !oldTagIds.includes(updateTagId));
-
-        await tx.restaurantTagA.updateMany({
-          where: {
-            restaurantId,
-            tagId: {
-              in: deleteIds,
+        try {
+          await tx.restaurantTagA.deleteMany({
+            where: {
+              restaurantId,
             },
-          },
-          data: {
-            deletedAt: new Date(),
-          },
-        });
-        await tx.restaurantTagA.createMany({
-          data: newIds.map((newId) => ({
-            restaurantId,
-            tagId: newId,
-          })),
-        });
+          });
+          await tx.restaurantTagA.createMany({
+            data: tagIds.map((tagId) => ({
+              restaurantId,
+              tagId,
+            })),
+          });
+        } catch (e) {
+          throw new InternalServerErrorException("태그 ID 변경 과정에서 문제가 발생했습니다.");
+        }
       }
 
       if (files) {
-        const fileUUIDs = files.map((file) => file.uuid);
-        await tx.file.updateMany({
-          where: {
-            uuid: {
-              notIn: fileUUIDs,
+        try {
+          const fileUUIDs = files.map((file) => file.uuid);
+          await tx.file.deleteMany({
+            where: {
+              restaurantId,
+              uuid: {
+                notIn: fileUUIDs,
+              },
             },
-            restaurantId,
-          },
-          data: {
-            deletedAt: new Date(),
-          },
-        });
-        const updateResponse = await tx.file.updateMany({
-          where: {
-            uuid: {
-              in: fileUUIDs,
+          });
+          const updateResponse = await tx.file.updateMany({
+            where: {
+              uuid: {
+                in: fileUUIDs,
+              },
             },
-          },
-          data: {
-            restaurantId,
-            deletedAt: null,
-          },
-        });
-        if (updateResponse.count !== files.length) {
-          throw new BadRequestException("존재하지 않는 file uuid가 전달되었습니다");
+            data: {
+              restaurantId,
+            },
+          });
+          if (updateResponse.count !== files.length) {
+            throw new BadRequestException("존재하지 않는 file uuid가 전달되었습니다");
+          }
+        } catch (e) {
+          throw new InternalServerErrorException("파일 변경 과정에서 문제가 발생했습니다.");
         }
       }
 
