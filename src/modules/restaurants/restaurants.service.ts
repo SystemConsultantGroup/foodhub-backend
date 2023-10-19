@@ -17,6 +17,31 @@ import { softDeleteRecords } from "src/common/utils/soft-delete-records";
 export class RestaurantsService {
   constructor(private prismaService: PrismaService) {}
 
+  private restaurantIncludeQuery = {
+    category: true,
+    Files: {
+      where: {
+        deletedAt: null,
+      },
+      select: {
+        uuid: true,
+        name: true,
+        mimeType: true,
+        size: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    },
+    RestaurantTagAs: {
+      where: {
+        deletedAt: null,
+      },
+      select: {
+        tag: true,
+      },
+    },
+  };
+
   async getRestaurants(getRestaurantsQueryDto: GetRestaurantsQueryDto, user: User | undefined) {
     let restaurants;
     const { sort } = getRestaurantsQueryDto;
@@ -24,28 +49,7 @@ export class RestaurantsService {
     const pageSize = getRestaurantsQueryDto.getLimit();
 
     const includeQuery = {
-      category: true,
-      Files: {
-        where: {
-          deletedAt: null,
-        },
-        select: {
-          uuid: true,
-          name: true,
-          mimeType: true,
-          size: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      },
-      RestaurantTagAs: {
-        where: {
-          deletedAt: null,
-        },
-        select: {
-          tag: true,
-        },
-      },
+      ...this.restaurantIncludeQuery,
       ...(sort === "topRated"
         ? {
             Reviews: {
@@ -120,30 +124,7 @@ export class RestaurantsService {
         id: restaurantId,
         deletedAt: null,
       },
-      include: {
-        category: true,
-        Files: {
-          where: {
-            deletedAt: null,
-          },
-          select: {
-            uuid: true,
-            name: true,
-            mimeType: true,
-            size: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        RestaurantTagAs: {
-          where: {
-            deletedAt: null,
-          },
-          select: {
-            tag: true,
-          },
-        },
-      },
+      include: this.restaurantIncludeQuery,
     });
     if (!restaurant) throw new NotFoundException("해당하는 맛집이 없습니다.");
     if (restaurant.isPublic) return restaurant;
@@ -197,30 +178,7 @@ export class RestaurantsService {
 
     const restaurants = await this.prismaService.restaurant.findMany({
       where: whereQuery,
-      include: {
-        category: true,
-        Files: {
-          where: {
-            deletedAt: null,
-          },
-          select: {
-            uuid: true,
-            name: true,
-            mimeType: true,
-            size: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        RestaurantTagAs: {
-          where: {
-            deletedAt: null,
-          },
-          select: {
-            tag: true,
-          },
-        },
-      },
+      include: this.restaurantIncludeQuery,
       skip: pageOffset,
       take: pageSize,
     });
@@ -337,30 +295,7 @@ export class RestaurantsService {
         where: {
           id: restaurant.id,
         },
-        include: {
-          category: true,
-          Files: {
-            where: {
-              deletedAt: null,
-            },
-            select: {
-              uuid: true,
-              name: true,
-              mimeType: true,
-              size: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-          RestaurantTagAs: {
-            where: {
-              deletedAt: null,
-            },
-            select: {
-              tag: true,
-            },
-          },
-        },
+        include: this.restaurantIncludeQuery,
       });
     });
   }
@@ -471,30 +406,7 @@ export class RestaurantsService {
           ...(typeof isPublic === "boolean" && { isPublic }),
           ...(categoryId && { categoryId }),
         },
-        include: {
-          category: true,
-          Files: {
-            where: {
-              deletedAt: null,
-            },
-            select: {
-              uuid: true,
-              name: true,
-              mimeType: true,
-              size: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-          RestaurantTagAs: {
-            where: {
-              deletedAt: null,
-            },
-            select: {
-              tag: true,
-            },
-          },
-        },
+        include: this.restaurantIncludeQuery,
       });
     });
   }
