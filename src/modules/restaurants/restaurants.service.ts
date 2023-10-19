@@ -11,6 +11,7 @@ import { User } from "@prisma/client";
 import { PageQueryDto } from "src/common/dtos/page-query.dto";
 import { CreateRestaurantDto } from "./dtos/create-restaurant.dto";
 import { PatchRestaurantDto } from "./dtos/patch-restaurant.dto";
+import { softDeleteRecords } from "src/common/utils/soft-delete-records";
 
 @Injectable()
 export class RestaurantsService {
@@ -432,7 +433,7 @@ export class RestaurantsService {
             },
           },
           data: {
-            deletedAt: new Date(Date.now()),
+            deletedAt: new Date(),
           },
         });
         await tx.restaurantTagA.createMany({
@@ -443,8 +444,8 @@ export class RestaurantsService {
         });
       }
 
-      const fileUUIDs = files.map((file) => file.uuid);
       if (files) {
+        const fileUUIDs = files.map((file) => file.uuid);
         await tx.file.updateMany({
           where: {
             uuid: {
@@ -453,7 +454,7 @@ export class RestaurantsService {
             restaurantId,
           },
           data: {
-            deletedAt: new Date(Date.now()),
+            deletedAt: new Date(),
           },
         });
         const updateResponse = await tx.file.updateMany({
@@ -467,7 +468,6 @@ export class RestaurantsService {
             deletedAt: null,
           },
         });
-        console.log(updateResponse.count);
         if (updateResponse.count !== files.length) {
           throw new BadRequestException("존재하지 않는 file uuid가 전달되었습니다");
         }
@@ -515,6 +515,35 @@ export class RestaurantsService {
           },
         },
       });
+    });
+  }
+
+  async deleteRestaurant(restaurantId: string, user: User) {
+    await this.prismaService.$transaction(async (tx) => {
+      const restaurant = await tx.restaurant.findUnique({
+        where: {
+          id: restaurantId,
+          deletedAt: null,
+        },
+      });
+      if (!restaurant) throw new NotFoundException("해당하는 맛집이 없습니다.");
+
+      const registration = await tx.registration.findFirst({
+        where: {
+          userId: user.id,
+          groupId: restaurant.groupId,
+          deletedAt: null,
+        },
+      });
+      if (!registration || registration.authority === 3) {
+        throw new UnauthorizedException("맛집 삭제 권한이 없습니다.");
+      }
+
+      await softDeleteRecords(tx.restaurantTagA, { restaurantId });
+      await softDeleteRecords(tx.file, { restaurantId });
+      await softDeleteRecords(tx.review, { restaurantId });
+      await softDeleteRecords(tx.voteItem, { restaurantId });
+      await softDeleteRecords(tx.restaurant, { id: restaurantId });
     });
   }
 }

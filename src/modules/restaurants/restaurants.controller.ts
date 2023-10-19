@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -18,6 +20,7 @@ import { User } from "@prisma/client";
 import { GetRestaurantsQueryDto } from "./dtos/get-restaurants-query.dto";
 import { RestaurantResponseDto } from "./dtos/restaurant-response.dto";
 import {
+  ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
@@ -94,8 +97,17 @@ export class RestaurantsController {
   }
 
   @Delete(":restaurantId")
-  async deleteRestaurant() {
-    return "Delete Restaurant";
+  @UseGuards(Oauth2Guard({ strict: true, isSignUp: false }))
+  @ApiOperation({
+    summary: "맛집 삭제 API",
+    description: "Restaurant ID에 해당하는 맛집을 삭제한다.",
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteRestaurant(
+    @Param("restaurantId", ParseUUIDPipe) restaurantId: string,
+    @CurrentUser() user: User
+  ) {
+    await this.restaurantsService.deleteRestaurant(restaurantId, user);
   }
 }
 
@@ -137,7 +149,7 @@ export class RestaurantControllerGroups {
     summary: "맛집 생성 API",
     description: "그룹의 소유자/관리자가 새로운 맛집을 등록한다.",
   })
-  @ApiOkResponse({ type: RestaurantResponseDto, description: "맛집 생성 성공" })
+  @ApiCreatedResponse({ type: RestaurantResponseDto, description: "맛집 생성 성공" })
   async createRestaurant(
     @Param("groupId", ParseBigIntPipe) groupId: bigint,
     @Body() createRestaurantDto: CreateRestaurantDto,
