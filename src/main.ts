@@ -5,6 +5,7 @@ import { AppModule } from "./app.module";
 import { winstonLogger } from "./config/logger/winston/logger";
 import { PrismaService } from "./config/database/prisma.service";
 import * as cookieParser from "cookie-parser";
+import { ValidationPipe } from "@nestjs/common";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -24,6 +25,14 @@ async function bootstrap() {
   SwaggerModule.setup("api", app, document);
   app.use(cookieParser());
   const prismaService = app.get(PrismaService);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      skipMissingProperties: true,
+    })
+  );
 
   await app.listen(appConfig.get("app.port"));
 }

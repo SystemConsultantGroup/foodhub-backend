@@ -3,7 +3,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["windows", "darwin", "debian-openssl-1.1.x"]
+  binaryTargets = ["windows", "darwin", "debian-openssl-1.1.x", "darwin-arm64"]
 }
 
 datasource db {
@@ -13,14 +13,13 @@ datasource db {
 
 model User {
   id             BigInt          @id @default(autoincrement())
-  email          String          @unique
+  email          String?          @unique
   password       String?
   provider       Provider        @default(KAKAO)
   oauthId        String?         @unique
   nickname       String
   defaultPhotoId Int             @db.TinyInt // 1~6
-  userPhotoUuid  String?
-  birthYear      DateTime?
+  birthYear      Int?
   gender         Int?            @db.TinyInt
   isActivated    Boolean
   createdAt      DateTime        @default(now())
