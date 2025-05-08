@@ -8,5 +8,6 @@ import { CacheModule } from "@nestjs/cache-manager";
   imports: [CacheModule.register()],
   controllers: [AuthController],
   providers: [AuthService, Oauth2Strategy],
+  exports: [Oauth2Strategy],
 })
 export class AuthModule {}
